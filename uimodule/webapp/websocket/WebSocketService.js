@@ -76,15 +76,21 @@ sap.ui.define(
 			setupConnection(connectionUrl, usePCP = true) {
 				// setup WebSocket
 				if (!this.webSocket) {
-					this.connectionUrl = connectionUrl;
-					this.usePcP = usePCP;
 					this.webSocket = usePCP
 						? new SAPPcPWebSocket(
 							connectionUrl,
 							SAPPcPWebSocket.SUPPORTED_PROTOCOLS.v10
 						)
 						: new WebSocket(connectionUrl);
+					// remember setup for reconnection handling
+					this.connectionUrl = connectionUrl;
+					this.usePcP = usePCP;
 				} else {
+					// We won't recreate a new WebSocket instance when we already have one.
+					// We also do not want to attach our event handlers multiple times.
+					// Might need redesign in the future, tricky though due to the WebSocket Instantiation itself.
+					// Different points in time where and when we actually have a connection URL vs where 
+					// and how we want to create the "WebSocketService" Instance. 
 					return;
 				}
 
