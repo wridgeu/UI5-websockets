@@ -84,7 +84,7 @@ and including them everywhere (can't be the rigth/best approach, right?).
 
 ## NodeJS WebSocket Server for Testing
 
-Simple NodeJS WebSocket Package [ws](https://github.com/websockets/ws)
+I'm using a simple NodeJS WebSocket Package calles "[ws](https://github.com/websockets/ws)" to spin up a samll `WebSocketServer` for some testing.
 
 ## Credits
 
