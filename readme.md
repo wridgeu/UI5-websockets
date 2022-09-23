@@ -88,5 +88,5 @@ I'm standing on the shoulders of giants. Thanks.
 
 - [Gregor Wolf](https://github.com/gregorwolf) PCP: https://blogs.sap.com/2015/09/07/abap-push-channel-messaging-channel-and-sapui5-demo-application/
 - [Holger Schäfer](https://mobile.twitter.com/hschaefer123): https://btp.udina.de/development/websocket.html#sapui5
-- PCP Protocl Spec: https://blogs.sap.com/2015/07/27/specification-of-the-push-channel-protocol-pcp/
+- PCP Protocol Spec: https://blogs.sap.com/2015/07/27/specification-of-the-push-channel-protocol-pcp/
 - Cool WebSocket Extension (Chrome): https://chrome.google.com/webstore/detail/websocket-test-client/fgponpodhbmadfljofbimhhlengambbn?hl=en
