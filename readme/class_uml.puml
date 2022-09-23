@@ -1,0 +1,97 @@
+@startuml
+
+enum WebSocketCloseCode {
+  NORMAL_CLOSURE: 1000
+  CLOSED_ABNORMALLY: 1006
+}
+
+enum WebSocketMessageAction {
+  SOME_ACTION: "some-action"
+}
+
+class WebSocketService {
+ -Logger
+ -WebSocket
+ -WebSocketEventFacade
+ +constructor()
+ +setupConnection(connectionUrl, usePcP)
+ +close()
+ +destroy()
+ +WebSocketEventFacade getWebSocketEventFacade()
+ -_reconnect()
+}
+
+class WebSocketEventFacade {
+  -WebSocketService
+  +constructor(WebSocketService)
+  +attachXYZ()
+  +detachXYZ()
+}
+
+class Component {
+  -WebSocketService
+  +init()
+  +getWebSocketService()
+  +destroy()
+}
+
+class sap.ui.base.EventProvider {
+
+}
+
+class sap.ui.base.Object {
+
+}
+
+class sap.base.Log {
+
+}
+
+class sap.ui.core.ws.WebSocket {
+
+}
+
+class sap.ui.core.ws.SapPcpWebSocket {
+
+}
+
+Component *-- WebSocketService : instantiates / destroys >
+WebSocketService *-- WebSocketMessageAction : uses >
+WebSocketEventFacade *-- WebSocketMessageAction : uses >
+WebSocketService *-- WebSocketCloseCode : uses >
+WebSocketService *-* WebSocketEventFacade : has
+sap.base.Log *-- WebSocketService : uses <
+sap.ui.core.ws.WebSocket *-- WebSocketService : uses <
+sap.ui.core.ws.SapPcpWebSocket *-- WebSocketService : uses <
+sap.ui.base.EventProvider <|-- WebSocketService : < extends
+sap.ui.base.Object <|-- WebSocketEventFacade : < extends
+
+note right of Component
+  Component provides the rest of the application with the
+  `singleton` WebSocketService instance
+end note
+
+note bottom of WebSocketEventFacade
+  Allows everyone else to easily attach to certain
+  events without actively requiring the ENUMS.
+
+  Whenever the WebSocketService reacts to new WebSocketMessageAction,
+  the ENUM `WebSocketMessageAction`, the Service and the Registry need
+  to be extended, nothing else.
+end note
+
+note right of WebSocketEventFacade::attachXYZ
+  Wraps attachEvent calls with given WebSocketMessageActions.
+end note
+note right of WebSocketEventFacade::detachXYZ
+  Wraps detachEvent calls with given WebSocketMessageActions.
+end note
+
+note left of WebSocketService::getWebSocketEventFacade
+ Allows for calls like: 
+ this.getWebSocketService().getWebSocketEventFacade().attachHuArrived()
+ within controllers. This way no controller requires the 
+ ENUMS or needs a manual `attachEvent` implementations.
+end note
+
+@enduml
