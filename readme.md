@@ -18,9 +18,15 @@ Most of these scenarios, especially with Internet Explorer, are just a dead end,
 
 So what did I do? I created a "WebSocketService" that does exactly what I need it to do. Not as flexible, resiliant and overall good designed as I'd like it to be but well, there are deadlines to be kept. The Service I'm using in this repository is a bit different as it uses some sort of "EventFacade", or "Registry" if you will(?), to hide some of the `attachEvent` logic behind an object and not enormously bloat up the WebSocketService itself too much.
 
-Overall It was my first time not directly going for the [EventBus](https://ui5.sap.com/sdk/#/api/sap.ui.core.EventBus) so I was excited to learn new things and try out extending the [EventProvider](https://ui5.sap.com/sdk/#/api/sap.ui.base.EventProvider). This gives us the opportunity to work less "global" and have a better overview of whats happening, i.e. publishing/firing events, compared to using a general/generic global Eventing Tunnel but in this case only one specific object instance which is used instead. So ... in theory better maintainability, right?
+Overall It was my first time not directly going for the [EventBus](https://ui5.sap.com/sdk/#/api/sap.ui.core.EventBus) so I was excited to learn new things and tried out extending the [EventProvider](https://ui5.sap.com/sdk/#/api/sap.ui.base.EventProvider). This gives us the possibility to work on a less "global" level and have a better overview of whats happening, compared to using a general & generic global eventing tunnel (like the EventBus). So ... in theory better maintainability, right?
 
-The way I'm using it though, I'm not so sure if that is still the case or if that even makes sense but when I first came up with this, I was quite happy. I'll admit that much. I'm generally usually unhappy with what I do even if it does what it needs to. I just think I'm quite horrible in building/designing these things. Honestly speaking I'd probably rethink the entire thing about 300 more times, if I had the time. Then again, there is only so much "Web Developer" inside of me, and no one I can really ping-pong off for ideas so I'll leave it as is for now.
+>**Note** 
+>
+> Quoting the UI5 Team [here](https://ui5.sap.com/sdk/#/api/sap.ui.core.EventBus): 
+>"It is recommended to use the EventBus only when there is no other option to communicate between different instances, e.g. native UI5 events. Custom events can be fired by classes that extend sap.ui.base.EventProvider, such as sap.ui.core.Control, sap.ui.core.mvc.View or sap.ui.core.Component, and the events can be consumed by other classes to achieve communication between different instances.
+>Heavily using the EventBus can easily result in code which is hard to read and maintain because it's difficult to keep an overview of all event publishers and subscribers."
+
+The way I'm using it though, I'm not so sure if this "better maintainability" is still a factor or if what I did even makes sense. When I first came up with this I was quite happy though, I'll admit that much. I'm generally usually unhappy with what I do even if it does what it needs to. I just think I'm quite horrible in building/designing these things. Honestly speaking I'd probably rethink the entire thing about 300 more times, if I had the time. Then again, there is only so much "Web Developer" inside of me, and no one I can really ping-pong off for ideas so I'll leave it as is for now.
 
 ## Design/Idea Overview
 
@@ -78,7 +84,7 @@ and including them everywhere (can't be the rigth/best approach, right?).
 
 ## NodeJS WebSocket Server for Testing
 
-Simple NodeJS WebSocket Package [ws](https://github.com/websockets/ws)
+I'm using a simple NodeJS WebSocket Package calles "[ws](https://github.com/websockets/ws)" to spin up a samll `WebSocketServer` for some testing.
 
 ## Credits
 
@@ -88,5 +94,5 @@ I'm standing on the shoulders of giants. Thanks.
 
 - [Gregor Wolf](https://github.com/gregorwolf) PCP: https://blogs.sap.com/2015/09/07/abap-push-channel-messaging-channel-and-sapui5-demo-application/
 - [Holger Schäfer](https://mobile.twitter.com/hschaefer123): https://btp.udina.de/development/websocket.html#sapui5
-- PCP Protocl Spec: https://blogs.sap.com/2015/07/27/specification-of-the-push-channel-protocol-pcp/
+- PCP Protocol Spec: https://blogs.sap.com/2015/07/27/specification-of-the-push-channel-protocol-pcp/
 - Cool WebSocket Extension (Chrome): https://chrome.google.com/webstore/detail/websocket-test-client/fgponpodhbmadfljofbimhhlengambbn?hl=en
