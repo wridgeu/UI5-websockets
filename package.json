@@ -1,14 +1,14 @@
 {
-    "name": "ui5websockts",
+    "name": "ui5websockets",
     "version": "0.0.1",
     "scripts": {
-        "start": "ui5 serve --config=uimodule/ui5.yaml  --open index.html",
-        "start:backend": "node ./DummyWebSocketServer.js",
-        "build:ui": "run-s  build:uimodule",
+        "start": "ui5 serve --config=frontend/ui5.yaml  --open index.html",
+        "start:backend": "node ./backend/WebSocketServer.js",
+        "build:ui": "run-s  build:frontend",
         "lint": "eslint ./**/webapp/**/*.js && prettier --plugin-search-dir=. --check ./**/webapp/**/*.{js,xml}",
         "lint-fix": "eslint ./**/webapp/**/*.js --fix && prettier --plugin-search-dir=. --write ./**/webapp/**/*.{js,xml} --no-error-on-unmatched-pattern",
-        "serve:uimodule": "ui5 serve --config=uimodule/ui5.yaml",
-        "build:uimodule": "ui5 build --config=uimodule/ui5.yaml --clean-dest --dest uimodule/dist --include-task=generateManifestBundle"
+        "serve:frontend": "ui5 serve --config=frontend/ui5.yaml",
+        "build:frontend": "ui5 build --config=frontend/ui5.yaml --clean-dest --dest frontend/dist --include-task=generateManifestBundle"
     },
     "devDependencies": {
         "@prettier/plugin-xml": "^1.1.0",

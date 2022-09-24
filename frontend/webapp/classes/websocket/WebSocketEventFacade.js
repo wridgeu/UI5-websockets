@@ -1,13 +1,13 @@
 sap.ui.define([
 	"sap/ui/base/Object",
-	"org/mrb/ui5websockts/websocket/type/WebSocketMessageAction"
+	"org/mrb/ui5websockets/classes/websocket/type/WebSocketMessageAction"
 ], (
 	Object,
 	MessageAction
 ) => {
 	"use strict";
 
-	return Object.extend("org.mrb.ui5websockts.websocket.WebSocketEventFacade", {
+	return Object.extend("org.mrb.ui5websockets.classes.websocket.WebSocketEventFacade", /** @lends org.mrb.ui5websockets.classes.websocket.WebSocketEventFacade.prototype */ {
 		/**
 		 * @override
 		 */

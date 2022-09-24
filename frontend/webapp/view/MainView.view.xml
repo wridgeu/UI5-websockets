@@ -1,0 +1,9 @@
+<mvc:View controllerName="org.mrb.ui5websockets.controller.MainView" xmlns:mvc="sap.ui.core.mvc" displayBlock="true" xmlns="sap.m">
+    <Page id="page" title="{i18n>title}" titleAlignment="Center">
+        <HBox renderType="Bare" justifyContent="Center" height="100%" alignItems="Center">
+            <Button text="Initialize a WS Connection" press=".setup"></Button>
+            <Button class="sapUiSmallMarginBeginEnd" text="Send Ping" press=".sendPing"></Button>
+            <Button text="Close Connection" press=".closeConnection"></Button>
+        </HBox>
+    </Page>
+</mvc:View>

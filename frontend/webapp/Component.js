@@ -1,12 +1,12 @@
 sap.ui.define([
     "sap/ui/core/UIComponent",
-    "org/mrb/ui5websockts/model/models",
-    "org/mrb/ui5websockts/websocket/WebSocketService"
+    "org/mrb/ui5websockets/model/models",
+    "org/mrb/ui5websockets/classes/websocket/WebSocketService"
 ],
     function (UIComponent, models, WebSocketService) {
         "use strict";
 
-        return UIComponent.extend("org.mrb.ui5websockts.Component", {
+        return UIComponent.extend("org.mrb.ui5websockets.Component", {
             metadata: {
                 manifest: "json"
             },
@@ -18,7 +18,7 @@ sap.ui.define([
              */
             init: function () {
                 // call the base component's init function
-                UIComponent.prototype.init.apply(this, arguments);
+                UIComponent.prototype.init.apply(this);
 
                 // enable routing
                 this.getRouter().initialize();
@@ -32,7 +32,7 @@ sap.ui.define([
 
             /**
              * Returns a instance of the WebSocketService
-             * @returns {typeof org.mrb.ui5websockts.websocket.WebSocketService}
+             * @returns {typeof org.mrb.ui5websockets.classes.websocket.WebSocketService}
              */
             getWebSocketService() {
                 return this.webSocketService;
@@ -45,7 +45,7 @@ sap.ui.define([
             destroy() {
                 this.webSocketService.destroy();
                 this.webSocketService = null;
-                UIComponent.prototype.destroy.apply(this, arguments);
+                UIComponent.prototype.destroy.apply(this);
             }
         });
     }

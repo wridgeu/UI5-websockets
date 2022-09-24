@@ -1,7 +1,7 @@
 {
     "_version": "1.42.0",
     "sap.app": {
-        "id": "org.mrb.ui5websockts",
+        "id": "org.mrb.ui5websockets",
         "type": "application",
         "i18n": {
             "bundleName": "i18n/i18n.properties",
@@ -52,7 +52,7 @@
             "i18n": {
                 "type": "sap.ui.model.resource.ResourceModel",
                 "settings": {
-                    "bundleName": "org.mrb.ui5websockts.i18n.i18n",
+                    "bundleName": "org.mrb.ui5websockets.i18n.i18n",
                     "supportedLocales": [""],
                     "fallbackLocale": ""
                 }
@@ -70,7 +70,7 @@
                 "routerClass": "sap.m.routing.Router",
                 "viewType": "XML",
                 "async": true,
-                "viewPath": "org.mrb.ui5websockts.view",
+                "viewPath": "org.mrb.ui5websockets.view",
                 "controlAggregation": "pages",
                 "controlId": "app",
                 "clearControlAggregation": false
@@ -93,7 +93,7 @@
             }
         },
         "rootView": {
-            "viewName": "org.mrb.ui5websockts.view.App",
+            "viewName": "org.mrb.ui5websockets.view.App",
             "type": "XML",
             "async": true,
             "id": "App"

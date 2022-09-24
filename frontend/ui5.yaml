@@ -1,11 +1,11 @@
 specVersion: "2.2"
 metadata:
-  name: ui5websockts
+  name: ui5websockets
 type: application
 resources:
   configuration:
     paths:
-      webapp: uimodule/webapp
+      webapp: frontend/webapp
 framework:
   name: OpenUI5
   version: 1.106.0
@@ -20,4 +20,4 @@ server:
       afterMiddleware: compression
       configuration:
         port: 35729
-        path: uimodule/webapp
+        path: frontend/webapp

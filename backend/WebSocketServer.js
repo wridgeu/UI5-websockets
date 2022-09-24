@@ -1,5 +1,5 @@
 /**
- * Insanely simple WS Server
+ * Simple WS Server
  * 
  * During initial connection build-up we send a greeting message to the UI.
  * Any message after that which has 'Ping' as payload, will just print out "Pong!"

@@ -11,7 +11,7 @@ sap.ui.define([
     (BaseController, MessageBox, MessageToast) => {
         "use strict";
 
-        return BaseController.extend("org.mrb.ui5websockts.controller.MainView", {
+        return BaseController.extend("org.mrb.ui5websockets.controller.MainView", {
             /**
              * @override
              */

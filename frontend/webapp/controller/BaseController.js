@@ -3,18 +3,18 @@ sap.ui.define(
         "sap/ui/core/mvc/Controller",
         "sap/ui/core/routing/History",
         "sap/ui/core/UIComponent",
-        "org/mrb/ui5websockts/model/formatter"
+        "org/mrb/ui5websockets/model/formatter"
     ],
     /**
      * @param {typeof sap.ui.core.mvc.Controller} Controller
      * @param {typeof sap.ui.core.routing.History} History
      * @param {typeof sap.ui.core.UIComponent} UIComponent
-     * @param {typeof org.mrb.ui5websockts.model.formatter} UIComponent
+     * @param {typeof org.mrb.ui5websockets.model.formatter} UIComponent
      */
     (Controller, History, UIComponent, formatter) => {
         "use strict";
 
-        return Controller.extend("org.mrb.ui5websockts.controller.BaseController", {
+        return Controller.extend("org.mrb.ui5websockets.controller.BaseController", {
             formatter: formatter,
 
             getWebSocketService() {
