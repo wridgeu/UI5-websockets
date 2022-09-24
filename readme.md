@@ -1,5 +1,23 @@
 # UI5 with simple WebSocket Implementation
 
+## Usage
+
+1. Have NodeJS installed (at least v16)
+2. Install all dependencies aka. 
+   ```sh 
+   npm i
+   ```
+3. Run the simple WebSocket Server via
+   ```sh 
+   npm run start:backend
+   ```
+4. Run the frontend via
+   ```sh 
+   npm run start
+   ```
+
+## Why?
+
 I recently worked a bit with WebSockets and had the fun to also use [APC/AMC](https://help.sap.com/docs/SAP_NETWEAVER_750/05d041d3df1a4595a3c45f57c15e2325/18ef61f6415743658407d4d17f06e950.html?version=7.5.9&locale=en-US) in addition to that.
 
 In my specific use-case we have some sort of pseudo-login which is reponsible for establishing a WebSocket connection. As only after the user is "logged in" we retrieve the URL to which our WebSocket needs to connect to. We also close a connection whenever the user performs a "logout"/leaves a certain page. I know logouts are tricky and I don't want to go too deep into that. The "logout" I'm speaking of here is a simple backwards navigation. 
