@@ -94,6 +94,16 @@ This project has been generated with 💙 and [easy-ui5](https://github.com/SAP)
 I'm standing on the shoulders of giants. Thanks.
 
 - [Gregor Wolf](https://github.com/gregorwolf) PCP: https://blogs.sap.com/2015/09/07/abap-push-channel-messaging-channel-and-sapui5-demo-application/
+  - https://github.com/gregorwolf/apcecho
 - [Holger Schäfer](https://mobile.twitter.com/hschaefer123): https://btp.udina.de/development/websocket.html#sapui5
-- PCP Protocol Spec: https://blogs.sap.com/2015/07/27/specification-of-the-push-channel-protocol-pcp/
+  - Exponential Backoff
+    - https://en.wikipedia.org/wiki/Exponential_backoff
+    - https://dev.to/jeroendk/how-to-implement-a-random-exponential-backoff-algorithm-in-javascript-18n6
+    - https://advancedweb.hu/how-to-implement-an-exponential-backoff-retry-strategy-in-javascript/
 - Cool WebSocket Extension (Chrome): https://chrome.google.com/webstore/detail/websocket-test-client/fgponpodhbmadfljofbimhhlengambbn?hl=en
+- Introduction to ABAP Channels: https://blogs.sap.com/2014/11/27/introduction-to-abap-channels/
+- [Masoud's](https://people.sap.com/masoud.aghadavoodijolfaei) Blog Series
+  - 1. https://blogs.sap.com/2013/11/18/websocket-communication-using-abap-push-channels/
+  - 2. https://blogs.sap.com/2014/03/26/abap-channels-part-2-publish-subscribe-messaging-using-abap-messaging-channels/
+  - 3. https://blogs.sap.com/2014/04/14/abap-channels-part-3-collaboration-scenario-using-abap-messaging-and-abap-push-channels/
+  - 4. PCP Protocol Spec - https://blogs.sap.com/2015/07/27/specification-of-the-push-channel-protocol-pcp/
