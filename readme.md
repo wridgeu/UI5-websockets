@@ -58,7 +58,7 @@ There are a few events which haven't had the honor to be taken into the ENUM. Na
 
 ## F.A.Q
 
-> Why is the connection setup (WebSocket Instantiation) not happening in the constructor?
+### Why is the connection setup (WebSocket Instantiation) not happening in the constructor?
 
 That indeed would make everything much easier. In my use-case I wanted to have the WebSocketService somewhat global but not as generic as the EventBus. That is why the Service Instance lives at component level and is implicitly handled as Singleton. Implicitly because the instance doesn't really prevent instantiation on a technical level (this could be changed though). It is instantiated and destroyed on component level (Component.js: `init` & `destroy`) and handed down into the rest of the application via the BaseController.
 
@@ -75,11 +75,11 @@ An alternative way would be, to throw this "WebSocketService" away completely an
 
 I've seen other applications not taking care of any of these things and simply creating a connection without ever closing them or caring if a reconnection is required. So you could definitely get away with simply opening up the connection, forwarding the events somehow (EventBus) or directly handling them in the current Controller and then never care about anything else that comes after.
 
-> Is the "Facade" necessary?
+### Is the "Facade" necessary?
 
 Not at all. Any Controller/Object can just take the "WebSocketService"-Instance and call `attachEventXYZ` or `detachEventXYZ` on it.
 
-> Are you using valid JSDoc
+### Are you using valid JSDoc?
 
 I'm really trying. Still not sure how to properly use it in custom projects (with custom namespaces etc.), other than basic JS types or defining custom Types ([@typedef](https://jsdoc.app/tags-typedef.html)) per file and including them everywhere (can't be the rigth/best approach, right?).
 
@@ -103,7 +103,7 @@ I'm standing on the shoulders of giants. Thanks.
 - Cool WebSocket Extension (Chrome): https://chrome.google.com/webstore/detail/websocket-test-client/fgponpodhbmadfljofbimhhlengambbn?hl=en
 - Introduction to ABAP Channels: https://blogs.sap.com/2014/11/27/introduction-to-abap-channels/
 - [Masoud's](https://people.sap.com/masoud.aghadavoodijolfaei) Blog Series
-  - 1. https://blogs.sap.com/2013/11/18/websocket-communication-using-abap-push-channels/
-  - 2. https://blogs.sap.com/2014/03/26/abap-channels-part-2-publish-subscribe-messaging-using-abap-messaging-channels/
-  - 3. https://blogs.sap.com/2014/04/14/abap-channels-part-3-collaboration-scenario-using-abap-messaging-and-abap-push-channels/
-  - 4. PCP Protocol Spec - https://blogs.sap.com/2015/07/27/specification-of-the-push-channel-protocol-pcp/
+  1. https://blogs.sap.com/2013/11/18/websocket-communication-using-abap-push-channels/
+  2. https://blogs.sap.com/2014/03/26/abap-channels-part-2-publish-subscribe-messaging-using-abap-messaging-channels/
+  3. https://blogs.sap.com/2014/04/14/abap-channels-part-3-collaboration-scenario-using-abap-messaging-and-abap-push-channels/
+  4. PCP Protocol Spec - https://blogs.sap.com/2015/07/27/specification-of-the-push-channel-protocol-pcp/
