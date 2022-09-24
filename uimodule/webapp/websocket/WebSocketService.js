@@ -52,14 +52,19 @@ sap.ui.define(
 			 * @constructor
 			 */
 			constructor: function () {
+
 				EventProvider.apply(this, arguments);
+
 				this._logger = Log.getLogger("WebSocketService.js");
 				this.eventingHelper = new WebSocketEventFacade(this);
-				this.maxReconnectAttempts = TEN_TIMES;
-				this.initialReconnectDelay = ONE_SECOND;
-				this.maximumReconnectDelay = SIXTEEN_SECONDS;
-				this.currentReconnectDelay = this.initialReconnectDelay;
+
 				this.currentRecconectAttempts = null;
+				this.maxReconnectAttempts = TEN_TIMES;
+
+				this.initialReconnectDelay = ONE_SECOND;
+				this.currentReconnectDelay = this.initialReconnectDelay;
+				this.maximumReconnectDelay = SIXTEEN_SECONDS;
+
 				this.reconnectTimeout = null;
 				this.webSocket = null;
 			},
@@ -179,11 +184,12 @@ sap.ui.define(
 
 
 			/**
-			 * Close the WebSocket connection with Code 1001 (Going Away)
+			 * Close the WebSocket connection with Code 1000 (Normal Closure)
 			 */
 			close() {
 				if (!this.webSocket) return
 				this.webSocket.close(CloseCode.NORMAL_CLOSURE);
+				// Reset some of the internal state
 				this.webSocket = null;
 				this.currentRecconectAttempts = null;
 				this.currentReconnectDelay = this.initialReconnectDelay;
@@ -201,14 +207,14 @@ sap.ui.define(
 			 */
 			_reconnect() {
 				this.webSocket = null;
-				if (this.currentReconnectDelay < this.maximumReconnectDelay) {
-					this.currentReconnectDelay *= 2;
-				}
 				if (this.currentRecconectAttempts === this.maxReconnectAttempts) {
 					this._logger.info("Max amount of reconnects reached.", `Event: "Close"`);
 					this.currentRecconectAttempts = null;
 					this.currentReconnectDelay = this.initialReconnectDelay;
 					return
+				}
+				if (this.currentReconnectDelay < this.maximumReconnectDelay) {
+					this.currentReconnectDelay *= 2;
 				}
 				this.currentRecconectAttempts += 1;
 				this.setupConnection(this.connectionUrl, this.usePcP);
