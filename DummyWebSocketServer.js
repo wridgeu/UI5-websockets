@@ -2,8 +2,8 @@
  * Insanely simple WS Server
  * 
  * During initial connection build-up we send a greeting message to the UI.
- * Any message after that will just print out "Pong!" while pretending to be a SAP PcP message 
- * (as we add some key called 'pcpFields' for context information).
+ * Any message after that which has 'Ping' as payload, will just print out "Pong!"
+ * while pretending to be a SAP PcP message (as we add some key called 'pcpFields' for context information).
  * 
  * We basically use simple straight up WebSocket but pretend that this one specific message
  * somewhat looks like a PCP one. ^^
@@ -19,6 +19,7 @@ const ws = new WebSocketServer({ port: 8081 });
 ws.on('connection', (ws) => {
   ws.on('message', (data) => {
     console.log('received: %s', data);
+    if (data.toString() !== 'Ping') return
     const payload = JSON.stringify({
       pcpFields: {
         action: "pingpong",
