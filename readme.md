@@ -52,6 +52,8 @@ myFacade.attachMyActionEvent(this.myHandlerFunction)
 myFacade.detachMyActionEvent(this.myHandlerFunction)
 ```
 
+A similar approach can be seen [here](https://github.com/SAP/openui5/blob/0df008b18c051e635aa196986d1a65bb593118fc/src/sap.ui.core/src/sap/ui/core/message/MessageProcessor.js#L80-L138) where the UI5 "MessageProcessor" takes care of wrapping the "messageChange"-Event accordingly so it is easier to consume/use from the outside.
+
 There are a few events which haven't had the honor to be taken into the ENUM. Namely all the events that do not map to a particular action that the frontend necessarily *wants* to listen to. The ENUM is just used as some sort of "contract", to get some sort of consistency with whatever comes from the backend. Therefore some of the rather technical/fallback events like `close`, `open` and the general `message` are not considered here. That is not a problem though, as these can just be taken into account within the "EventFacade".
 
 ## F.A.Q
