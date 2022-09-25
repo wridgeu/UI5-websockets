@@ -2,7 +2,8 @@
     "name": "ui5websockets",
     "version": "0.0.1",
     "scripts": {
-        "start": "ui5 serve --config=frontend/ui5.yaml  --open index.html",
+        "start": "npm-run-all --parallel start:frontend start:backend",
+        "start:frontend": "ui5 serve --config=frontend/ui5.yaml  --open index.html",
         "start:backend": "node ./backend/WebSocketServer.js",
         "build:ui": "run-s  build:frontend",
         "lint": "eslint ./**/webapp/**/*.js && prettier --plugin-search-dir=. --check ./**/webapp/**/*.{js,xml}",

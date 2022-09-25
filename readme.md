@@ -3,18 +3,28 @@
 ## Usage
 
 1. Have NodeJS installed (at least v16)
-2. Install all dependencies aka. 
-   ```sh 
+2. Install all dependencies aka.
+   ```sh
    npm i
    ```
-3. Run the simple WebSocket Server via
-   ```sh 
-   npm run start:backend
+4. Run Front- and Backend in parallel via
+   ```sh
+   npm start
    ```
-4. Run the frontend via
-   ```sh 
-   npm run start
-   ```
+
+### Alternative
+
+Run the simple WebSocket Server via
+
+```sh
+npm run start:backend
+```
+
+Run the frontend via
+
+```sh
+npm run start
+```
 
 ## Why?
 
