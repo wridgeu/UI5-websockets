@@ -150,7 +150,14 @@ sap.ui.define(
 					return;
 				}
 
+				// In case we're within a reconnect attempt, clear timeout (asap)
+				clearTimeout(this._reconnectTimeout)
+				// close the connection
 				this._webSocket.close();
+				// Reset some of the internal state
+				this._webSocket = null;
+				this._currentReconnectAttempts = null;
+				this._currentReconnectDelay = this._initialReconnectDelay;
 			},
 
 			/**
@@ -227,12 +234,6 @@ sap.ui.define(
 					// In case we manually close our connection
 					// we do not want to trigger a reconnect!
 					this._logger.info("Connection manually closed.", `Event: "Close"`);
-					// In case we're within a reconnect attempt, clear timeout (asap)
-					clearTimeout(this._reconnectTimeout)
-					// Reset some of the internal state
-					this._webSocket = null;
-					this._currentReconnectAttempts = null;
-					this._currentReconnectDelay = this._initialReconnectDelay;
 					return;
 				}
 				// eslint-disable-next-line sap-timeout-usage
