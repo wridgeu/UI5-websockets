@@ -56,17 +56,17 @@ sap.ui.define(
 				EventProvider.apply(this);
 
 				this._logger = Log.getLogger("WebSocketService.js");
-				this._eventingHelper = new WebSocketEventFacade(this);
+				this._eventingHelper = new WebSocketEventFacade(this); // could be loaded async in getEventingHelper
+				// reconnect attempts
+				this._currentReconnectAttempts = null;
+				this._maxReconnectAttempts = TEN_TIMES;
+				// reonnect delay (backoff)
+				this._initialReconnectDelay = ONE_SECOND;
+				this._currentReconnectDelay = this._initialReconnectDelay;
+				this._maximumReconnectDelay = SIXTEEN_SECONDS;
 
-				this.currentRecconectAttempts = null;
-				this.maxReconnectAttempts = TEN_TIMES;
-
-				this.initialReconnectDelay = ONE_SECOND;
-				this.currentReconnectDelay = this.initialReconnectDelay;
-				this.maximumReconnectDelay = SIXTEEN_SECONDS;
-
-				this.reconnectTimeout = null;
-				this.webSocket = null;
+				this._reconnectTimeout = null;
+				this._webSocket = null;
 			},
 
 			/**
@@ -81,8 +81,8 @@ sap.ui.define(
 			 */
 			setupConnection(connectionUrl, usePCP = true) {
 				// setup WebSocket
-				if (!this.webSocket) {
-					this.webSocket = usePCP
+				if (!this._webSocket) {
+					this._webSocket = usePCP
 						? new SAPPcPWebSocket(
 							connectionUrl,
 							SAPPcPWebSocket.SUPPORTED_PROTOCOLS.v10
@@ -100,10 +100,10 @@ sap.ui.define(
 					return;
 				}
 
-				this.webSocket.attachOpen(this._onOpen.bind(this));
-				this.webSocket.attachError(this._onError.bind(this));
-				this.webSocket.attachClose(this._onClose.bind(this));
-				this.webSocket.attachMessage(this._onMessage.bind(this));
+				this._webSocket.attachOpen(this._onOpen.bind(this));
+				this._webSocket.attachError(this._onError.bind(this));
+				this._webSocket.attachClose(this._onClose.bind(this));
+				this._webSocket.attachMessage(this._onMessage.bind(this));
 			},
 
 			/**
@@ -122,16 +122,15 @@ sap.ui.define(
 			 * @public
 			 */
 			send(payload) {
-				if (!this.webSocket) {
+				if (!this._webSocket) {
 					this._logger.warning(
 						"Unable to send WebSocket message. No WebSocket Instance available, setup a connection first."
 					);
 					return;
 				}
 
-				this.webSocket.send(payload);
+				this._webSocket.send(payload);
 			},
-
 
 			/**
 			 * Close the WebSocket connection with Code 1000 (Normal Closure, Default used in UI5)
@@ -139,19 +138,35 @@ sap.ui.define(
 			 * @public
 			 */
 			close() {
-				if (!this.webSocket) {
+				if (!this._webSocket) {
 					this._logger.warning(
 						"Unable to close WebSocket. No WebSocket Instance available, setup a connection first."
 					);
 					return;
 				}
-				this.webSocket.close();
+				this._webSocket.close();
 				// Reset some of the internal state
-				this.webSocket = null;
-				this.currentRecconectAttempts = null;
-				this.currentReconnectDelay = this.initialReconnectDelay;
+				this._webSocket = null;
+				this._currentReconnectAttempts = null;
+				this._currentReconnectDelay = this._initialReconnectDelay;
 				// In case we're within a reconnect attempt, clear timeout
-				clearTimeout(this.reconnectTimeout)
+				clearTimeout(this._reconnectTimeout)
+			},
+
+			/**
+			 * Cleans up the internals.
+			 *
+			 * The object must not be used anymore after destroy was called.
+			 *
+			 * @see sap.ui.base.Object#destroy
+			 * @public
+			 */
+			destroy() {
+				this._webSocket = null;
+				this._logger = null;
+				this._currentReconnectAttempts = null;
+				clearTimeout(this._reconnectTimeout)
+				EventProvider.destroy.apply(this);
 			},
 
 			/**
@@ -165,34 +180,18 @@ sap.ui.define(
 			 * @private
 			 */
 			_reconnect() {
-				this.webSocket = null;
-				if (this.currentRecconectAttempts === this.maxReconnectAttempts) {
+				this._webSocket = null;
+				if (this._currentReconnectAttempts === this._maxReconnectAttempts) {
 					this._logger.info("Max amount of reconnects reached.", `Event: "Close"`);
-					this.currentRecconectAttempts = null;
-					this.currentReconnectDelay = this.initialReconnectDelay;
+					this._currentReconnectAttempts = null;
+					this._currentReconnectDelay = this._initialReconnectDelay;
 					return
 				}
-				if (this.currentReconnectDelay < this.maximumReconnectDelay) {
-					this.currentReconnectDelay *= 2;
+				if (this._currentReconnectDelay < this._maximumReconnectDelay) {
+					this._currentReconnectDelay *= 2;
 				}
-				this.currentRecconectAttempts += 1;
+				this._currentReconnectAttempts += 1;
 				this.setupConnection(this.connectionUrl, this.usePcP);
-			},
-
-			/**
-			 * Cleans up the internals.
-			 *
-			 * The object must not be used anymore after destroy was called.
-			 *
-			 * @see sap.ui.base.Object#destroy
-			 * @public
-			 */
-			destroy() {
-				this.webSocket = null;
-				this._logger = null;
-				this.currentRecconectAttempts = null;
-				clearTimeout(this.reconnectTimeout)
-				EventProvider.destroy.apply(this);
 			},
 
 			// WebSocket Event-Handlers
@@ -203,10 +202,10 @@ sap.ui.define(
 			 */
 			_onOpen(event) {
 				this.fireEvent("open", { data: event });
-				this.currentReconnectDelay = this.initialReconnectDelay;
+				this._currentReconnectDelay = this._initialReconnectDelay;
 				this._logger.info(
 					"WebSocket connection opened!",
-					`Event: "Open", currentReconnectDelay: ${this.currentReconnectDelay}, initialReconnectDelay:${this.initialReconnectDelay}`
+					`Event: "Open", currentReconnectDelay: ${this._currentReconnectDelay}, initialReconnectDelay:${this._initialReconnectDelay}`
 				);
 			},
 
@@ -219,6 +218,7 @@ sap.ui.define(
 				this.fireEvent("error", { data: event });
 				this._logger.error("An Error occured!", `Event: "Error"`);
 			},
+
 			/**
 			 * Internal handler for close-event.
 			 *
@@ -234,14 +234,15 @@ sap.ui.define(
 					return;
 				}
 				// eslint-disable-next-line sap-timeout-usage
-				this.reconnectTimeout = setTimeout(() => {
+				this._reconnectTimeout = setTimeout(() => {
 					try {
 						this._reconnect();
 					} catch (error) {
 						this._logger.error("An Error occured when trying to reconnect!", error);
 					}
-				}, this.currentReconnectDelay + Math.floor(Math.random() * 3000));
+				}, this._currentReconnectDelay + Math.floor(Math.random() * 3000));
 			},
+
 			/**
 			 * Internal handler for message-event.
 			 *

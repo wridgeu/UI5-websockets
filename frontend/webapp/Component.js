@@ -3,6 +3,13 @@ sap.ui.define([
     "org/mrb/ui5websockets/model/models",
     "org/mrb/ui5websockets/classes/websocket/WebSocketService"
 ],
+    /**
+     * 
+     * @param {sap.ui.core.UIComponent} UIComponent 
+     * @param {typeof org.mrb.ui5websockets.model.models} models 
+     * @param {typeof org.mrb.ui5websockets.classes.websocket.WebSocketService} WebSocketService 
+     * @returns {typeof sap.ui.core.UIComponent}
+     */
     function (UIComponent, models, WebSocketService) {
         "use strict";
 
