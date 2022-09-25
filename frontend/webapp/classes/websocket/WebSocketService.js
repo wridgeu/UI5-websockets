@@ -231,12 +231,13 @@ sap.ui.define(
 				this.fireEvent("close", { data: event });
 				this._logger.info("WebSocket connection has been closed!", `Event: "Close"`);
 				if (event.getParameter("code") === CloseCode.NORMAL_CLOSURE) {
-					// In case we manually close our connection
+					// In case we close our manually connection,
 					// we do not want to trigger a reconnect!
 					this._logger.info("Connection manually closed.", `Event: "Close"`);
 					return;
 				}
 				// eslint-disable-next-line sap-timeout-usage
+				this._logger.info("Connection closed abnormally, trying to reconnect.", `Event: "Close"`);
 				this._reconnectTimeout = setTimeout(() => {
 					try {
 						this._reconnect();

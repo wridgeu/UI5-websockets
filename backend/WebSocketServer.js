@@ -17,6 +17,8 @@ const WebSocketServer = require('ws').WebSocketServer
 const ws = new WebSocketServer({ port: 8081 });
 
 ws.on('connection', (ws) => {
+  console.log('connection opened, hi');
+
   ws.on('message', (data) => {
     console.log('received: %s', data);
     if (data.toString() !== 'Ping') return
@@ -27,8 +29,15 @@ ws.on('connection', (ws) => {
       data: "Pong!"
     })
     ws.send(payload);
+    console.log('sent: %s', payload);
   });
 
+  ws.on('close', (data) => {
+    console.log('received: %s', data);
+    console.log('connection closed, bye');
+  });
+
+  // initial payload as answer for the connection build-up
   const payload = JSON.stringify({
     pcpFields: {
       action: "some-action",
