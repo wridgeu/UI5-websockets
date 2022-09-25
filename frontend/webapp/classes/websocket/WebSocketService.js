@@ -14,29 +14,29 @@
 sap.ui.define(
 	[
 		"sap/ui/base/EventProvider",
+		"sap/ui/core/ws/SapPcpWebSocket",
+		"sap/ui/core/ws/WebSocket",
+		"sap/base/Log",
 		"org/mrb/ui5websockets/classes/websocket/type/WebSocketMessageAction",
 		"org/mrb/ui5websockets/classes/websocket/type/WebSocketCloseCode",
 		"org/mrb/ui5websockets/classes/websocket/WebSocketEventFacade",
-		"sap/base/Log",
-		"sap/ui/core/ws/WebSocket",
-		"sap/ui/core/ws/SapPcpWebSocket",
 	],
 	/**
 	 * @param {typeof sap.ui.base.EventProvider} EventProvider
+	 * @param {typeof sap.ui.core.ws.SapPcpWebSocket} SAPPcPWebSocket
+	 * @param {typeof sap.ui.core.ws.WebSocket} WebSocket
+	 * @param {typeof sap.base.Log} Log
 	 * @param {typeof org.mrb.ui5websockets.classes.websocket.type.WebSocketMessageAction} MessageAction
 	 * @param {typeof org.mrb.ui5websockets.classes.websocket.type.WebSocketCloseCode} CloseCode
 	 * @param {typeof org.mrb.ui5websockets.classes.websocket.WebSocketEventFacade} WebSocketEventFacade
-	 * @param {typeof sap.base.Log} Log
-	 * @param {typeof sap.ui.core.ws.WebSocket} WebSocket
-	 * @param {typeof sap.ui.core.ws.SapPcpWebSocket} SAPPcPWebSocket
 	 */
 	(EventProvider,
+		SAPPcPWebSocket,
+		WebSocket,
+		Log,
 		MessageAction,
 		CloseCode,
-		WebSocketEventFacade,
-		Log,
-		WebSocket,
-		SAPPcPWebSocket) => {
+		WebSocketEventFacade) => {
 		"use strict";
 
 		const ONE_SECOND = 1_000;
@@ -56,7 +56,8 @@ sap.ui.define(
 				EventProvider.apply(this);
 
 				this._logger = Log.getLogger("WebSocketService.js");
-				this._eventingHelper = new WebSocketEventFacade(this); // could be loaded async in getEventingHelper
+				// could be loaded async in getEventingHelper but we assume it is necessary to use this
+				this._eventingHelper = new WebSocketEventFacade(this);
 				// reconnect attempts
 				this._currentReconnectAttempts = null;
 				this._maxReconnectAttempts = TEN_TIMES;
@@ -64,8 +65,9 @@ sap.ui.define(
 				this._initialReconnectDelay = ONE_SECOND;
 				this._currentReconnectDelay = this._initialReconnectDelay;
 				this._maximumReconnectDelay = SIXTEEN_SECONDS;
-
+				// reconnect timeout-timer (set if we currently try to reconnect)
 				this._reconnectTimeout = null;
+				// internal websocket instance
 				this._webSocket = null;
 			},
 
@@ -80,8 +82,8 @@ sap.ui.define(
 			 * @public
 			 */
 			setupConnection(connectionUrl, usePCP = true) {
-				// setup WebSocket
 				if (!this._webSocket) {
+					// setup WebSocket
 					this._webSocket = usePCP
 						? new SAPPcPWebSocket(
 							connectionUrl,
@@ -89,8 +91,8 @@ sap.ui.define(
 						)
 						: new WebSocket(connectionUrl);
 					// remember setup for reconnection handling
-					this.connectionUrl = connectionUrl;
-					this.usePcP = usePCP;
+					this._connectionUrl = connectionUrl;
+					this._usePcP = usePCP;
 				} else {
 					// We won't recreate a new WebSocket instance when we already have one.
 					// We also do not want to attach our event handlers multiple times.
@@ -99,7 +101,7 @@ sap.ui.define(
 					// and how we want to create the "WebSocketService" Instance. 
 					return;
 				}
-
+				// forward handling
 				this._webSocket.attachOpen(this._onOpen.bind(this));
 				this._webSocket.attachError(this._onError.bind(this));
 				this._webSocket.attachClose(this._onClose.bind(this));
@@ -108,6 +110,9 @@ sap.ui.define(
 
 			/**
 			 * Return the EventingHelper/Wrapper
+			 * 
+			 * Can work completely without it by attaching handlers directly
+			 * to the WebSocketService-Instance via `attachEvent('eventName', fn, ...)`.
 			 * 
 			 * @public
 			 */
@@ -144,17 +149,12 @@ sap.ui.define(
 					);
 					return;
 				}
+
 				this._webSocket.close();
-				// Reset some of the internal state
-				this._webSocket = null;
-				this._currentReconnectAttempts = null;
-				this._currentReconnectDelay = this._initialReconnectDelay;
-				// In case we're within a reconnect attempt, clear timeout
-				clearTimeout(this._reconnectTimeout)
 			},
 
 			/**
-			 * Cleans up the internals.
+			 * Cleanup internals.
 			 *
 			 * The object must not be used anymore after destroy was called.
 			 *
@@ -164,7 +164,6 @@ sap.ui.define(
 			destroy() {
 				this._webSocket = null;
 				this._logger = null;
-				this._currentReconnectAttempts = null;
 				clearTimeout(this._reconnectTimeout)
 				EventProvider.destroy.apply(this);
 			},
@@ -182,7 +181,7 @@ sap.ui.define(
 			_reconnect() {
 				this._webSocket = null;
 				if (this._currentReconnectAttempts === this._maxReconnectAttempts) {
-					this._logger.info("Max amount of reconnects reached.", `Event: "Close"`);
+					this._logger.warning("Max amount of reconnect attempts reached.");
 					this._currentReconnectAttempts = null;
 					this._currentReconnectDelay = this._initialReconnectDelay;
 					return
@@ -191,7 +190,7 @@ sap.ui.define(
 					this._currentReconnectDelay *= 2;
 				}
 				this._currentReconnectAttempts += 1;
-				this.setupConnection(this.connectionUrl, this.usePcP);
+				this.setupConnection(this._connectionUrl, this._usePcP);
 			},
 
 			// WebSocket Event-Handlers
@@ -203,10 +202,7 @@ sap.ui.define(
 			_onOpen(event) {
 				this.fireEvent("open", { data: event });
 				this._currentReconnectDelay = this._initialReconnectDelay;
-				this._logger.info(
-					"WebSocket connection opened!",
-					`Event: "Open", currentReconnectDelay: ${this._currentReconnectDelay}, initialReconnectDelay:${this._initialReconnectDelay}`
-				);
+				this._logger.info("WebSocket connection opened!", `Event: "Open"`);
 			},
 
 			/**
@@ -231,6 +227,12 @@ sap.ui.define(
 					// In case we manually close our connection
 					// we do not want to trigger a reconnect!
 					this._logger.info("Connection manually closed.", `Event: "Close"`);
+					// In case we're within a reconnect attempt, clear timeout (asap)
+					clearTimeout(this._reconnectTimeout)
+					// Reset some of the internal state
+					this._webSocket = null;
+					this._currentReconnectAttempts = null;
+					this._currentReconnectDelay = this._initialReconnectDelay;
 					return;
 				}
 				// eslint-disable-next-line sap-timeout-usage
