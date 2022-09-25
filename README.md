@@ -23,7 +23,7 @@ npm run start:backend
 Run the frontend via
 
 ```sh
-npm run start
+npm run start:frontend
 ```
 
 ## Why?
