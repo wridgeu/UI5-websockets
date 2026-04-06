@@ -1,10 +1,5 @@
 sap.ui.define(
-    [
-        "sap/ui/core/mvc/Controller",
-        "sap/ui/core/routing/History",
-        "sap/ui/core/UIComponent",
-        "org/mrb/ui5websockets/model/formatter"
-    ],
+    ["sap/ui/core/mvc/Controller", "sap/ui/core/routing/History", "sap/ui/core/UIComponent", "org/mrb/ui5websockets/model/formatter"],
     /**
      * @param {typeof sap.ui.core.mvc.Controller} Controller
      * @param {typeof sap.ui.core.routing.History} History
@@ -74,7 +69,7 @@ sap.ui.define(
                 } else {
                     this.getRouter().navTo("appHome", {}, true /* no history */);
                 }
-            }
+            },
         });
-    }
+    },
 );

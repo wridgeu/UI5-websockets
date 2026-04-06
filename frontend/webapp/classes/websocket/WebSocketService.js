@@ -237,7 +237,6 @@ sap.ui.define(
 					return;
 				}				
 				this._logger.info("Connection closed abnormally, trying to reconnect.", `Event: "Close"`);
-        // eslint-disable-next-line sap-timeout-usage
 				this._reconnectTimeout = setTimeout(() => {
 					try {
 						this._reconnect();
