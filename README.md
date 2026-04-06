@@ -4,15 +4,11 @@
 A demo repository showcasing WebSocket and SAP PCP (Push Channel Protocol) integration with SAPUI5, featuring a reusable retry strategy with exponential backoff, an eventing facade, and a custom terminal-like event log control.
 </p>
 
----
-
 *Demo overview*
 ![Demo overview showing the event log terminal with connection, messaging, and retry events](./readme/Example%20Overview%201.png)
 
 *Reconnection with greeting*
 ![Reconnection scenario showing the backend greeting after a successful retry](./readme/Example%20Overview%202.png)
-
----
 
 ## Usage
 
