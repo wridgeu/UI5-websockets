@@ -147,4 +147,4 @@ Resolution order: custom type -> built-in type -> `info` fallback.
 - **Security**: All text escaped via `RenderManager.text()` (renderer path) and `createTextNode()` (direct DOM path)
 - **CSS**: Loaded once via `sap/ui/dom/includeStylesheet` on first instantiation
 - **Resize**: Uses `sap/ui/core/ResizeHandler` to re-evaluate scroll on resize
-- **Timestamps**: Uses the Temporal API (`Temporal.Now.plainTimeISO()`)
+- **Timestamps**: Uses the Temporal API (`Temporal.Now.plainTimeISO()`) with a `Date`-based fallback for browsers without Temporal support
