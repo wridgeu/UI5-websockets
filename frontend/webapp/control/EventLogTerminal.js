@@ -124,6 +124,13 @@ sap.ui.define(
                 this._sResizeHandlerId = null;
                 /** @private */
                 this._fnOnResize = this._onResize.bind(this);
+                /**
+                 * Tracks connected event sources for automatic cleanup on destroy.
+                 * Each entry is { source, event, handler }.
+                 * @private
+                 * @type {Array<{source: sap.ui.base.EventProvider, event: string, handler: function}>}
+                 */
+                this._aConnectedSources = [];
             },
 
             /**
@@ -145,7 +152,7 @@ sap.ui.define(
 
             /**
              * Cleanup on control destruction.
-             * Deregisters the ResizeHandler to prevent memory leaks.
+             * Deregisters the ResizeHandler and disconnects all event sources.
              *
              * @override
              */
@@ -154,6 +161,97 @@ sap.ui.define(
                     ResizeHandler.deregister(this._sResizeHandlerId);
                     this._sResizeHandlerId = null;
                 }
+                this.disconnectAllSources();
+            },
+
+            /**
+             * Connect an EventProvider as a log source.
+             *
+             * Attaches to the specified events on the source and automatically logs
+             * them to the terminal. All connections are tracked and cleaned up when
+             * the control is destroyed or when `disconnectSource` / `disconnectAllSources`
+             * is called.
+             *
+             * The `mEventMapping` maps event names to either a log type string or an
+             * object with `type` and `message` (string or formatter function).
+             *
+             * Usage:
+             * ```js
+             * // Simple mapping: event name -> log type (message is the event name)
+             * terminal.connectSource(wsService, {
+             *     "open": "open",
+             *     "close": "close",
+             *     "error": "error"
+             * });
+             *
+             * // Advanced mapping: custom message per event
+             * terminal.connectSource(wsService, {
+             *     "open": { type: "open", message: "Connection established." },
+             *     "close": { type: "close", message: function(oEvent) {
+             *         return "Closed with code " + oEvent.getParameter("code");
+             *     }}
+             * });
+             *
+             * // Connect RetryStrategy events
+             * terminal.connectSource(retryStrategy, {
+             *     "scheduled": { type: "retry", message: function(oEvent) {
+             *         return "Retry #" + oEvent.getParameter("attempt") + " in " + oEvent.getParameter("delay") + "ms";
+             *     }},
+             *     "maxAttemptsReached": { type: "error", message: "Max retry attempts reached." },
+             *     "reset": { type: "info", message: "Retry strategy reset." }
+             * });
+             * ```
+             *
+             * @param {sap.ui.base.EventProvider} oSource The event source to connect
+             * @param {Object<string, string|{type: string, message: string|function}>} mEventMapping Event-to-log mapping
+             * @public
+             */
+            connectSource(oSource, mEventMapping) {
+                const aEvents = Object.keys(mEventMapping);
+                aEvents.forEach((sEvent) => {
+                    const vConfig = mEventMapping[sEvent];
+                    const sType = typeof vConfig === "string" ? vConfig : vConfig.type;
+                    const vMessage = typeof vConfig === "string" ? sEvent : vConfig.message;
+
+                    const fnHandler = (oEvent) => {
+                        const sMessage = typeof vMessage === "function" ? vMessage(oEvent) : vMessage;
+                        this.log(sType, sMessage);
+                    };
+
+                    oSource.attachEvent(sEvent, fnHandler);
+                    this._aConnectedSources.push({ source: oSource, event: sEvent, handler: fnHandler });
+                });
+            },
+
+            /**
+             * Disconnect a specific event source, removing all event listeners
+             * that were registered via `connectSource`.
+             *
+             * @param {sap.ui.base.EventProvider} oSource The event source to disconnect
+             * @public
+             */
+            disconnectSource(oSource) {
+                this._aConnectedSources = this._aConnectedSources.filter((oEntry) => {
+                    if (oEntry.source === oSource) {
+                        oEntry.source.detachEvent(oEntry.event, oEntry.handler);
+                        return false;
+                    }
+                    return true;
+                });
+            },
+
+            /**
+             * Disconnect all event sources that were registered via `connectSource`.
+             *
+             * Called automatically on control destruction.
+             *
+             * @public
+             */
+            disconnectAllSources() {
+                this._aConnectedSources.forEach((oEntry) => {
+                    oEntry.source.detachEvent(oEntry.event, oEntry.handler);
+                });
+                this._aConnectedSources = [];
             },
 
             /**
