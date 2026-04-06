@@ -1,10 +1,10 @@
 {
-    "_version": "1.42.0",
+    "_version": "2.6.0",
     "sap.app": {
         "id": "org.mrb.ui5websockets",
         "type": "application",
         "i18n": {
-            "bundleName": "i18n/i18n.properties",
+            "bundleName": "org.mrb.ui5websockets.i18n.i18n",
             "supportedLocales": [""],
             "fallbackLocale": ""
         },
@@ -13,7 +13,6 @@
         },
         "title": "{{appTitle}}",
         "description": "{{appDescription}}",
-        "resources": "resources.json",
         "sourceTemplate": {
             "id": "@sap-ux/fiori-freestyle-writer:basic",
             "version": "0.12.8"
@@ -38,7 +37,7 @@
     "sap.ui5": {
         "flexEnabled": false,
         "dependencies": {
-            "minUI5Version": "1.106.0",
+            "minUI5Version": "1.146.0",
             "libs": {
                 "sap.m": {},
                 "sap.ui.core": {}
@@ -69,8 +68,7 @@
             "config": {
                 "routerClass": "sap.m.routing.Router",
                 "viewType": "XML",
-                "async": true,
-                "viewPath": "org.mrb.ui5websockets.view",
+                "path": "org.mrb.ui5websockets.view",
                 "controlAggregation": "pages",
                 "controlId": "app",
                 "clearControlAggregation": false
@@ -84,18 +82,16 @@
             ],
             "targets": {
                 "TargetMainView": {
-                    "viewType": "XML",
-                    "transition": "slide",
-                    "clearControlAggregation": false,
-                    "viewId": "MainView",
-                    "viewName": "MainView"
+                    "type": "View",
+                    "name": "MainView",
+                    "id": "MainView",
+                    "transition": "slide"
                 }
             }
         },
         "rootView": {
             "viewName": "org.mrb.ui5websockets.view.App",
             "type": "XML",
-            "async": true,
             "id": "App"
         }
     }

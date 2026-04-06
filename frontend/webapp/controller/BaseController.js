@@ -67,12 +67,12 @@ sap.ui.define(
             },
 
             onNavBack() {
-                var sPreviousHash = History.getInstance().getPreviousHash();
+                const sPreviousHash = History.getInstance().getPreviousHash();
 
                 if (sPreviousHash !== undefined) {
                     window.history.back();
                 } else {
-                    this.getRouter().navTo("appHome", {}, true /*no history*/);
+                    this.getRouter().navTo("appHome", {}, true /* no history */);
                 }
             }
         });

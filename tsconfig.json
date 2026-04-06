@@ -8,7 +8,7 @@
       "@sapui5/ts-types"
     ],
     "lib": [
-      "es2015"
+      "es2022"
     ]
   }
 }
