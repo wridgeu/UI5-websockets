@@ -105,9 +105,21 @@ const retry = new RetryStrategy({
 });
 ```
 
+The RetryStrategy extends `EventProvider` and fires lifecycle events that consumers can listen to:
+
+- `scheduled` - fired when a retry is scheduled, with parameters `{ attempt, delay }`
+- `maxAttemptsReached` - fired when the max number of attempts has been reached, with `{ attempts }`
+- `reset` - fired when the strategy is reset to its initial state
+
 The WebSocketService uses it internally: on abnormal close it calls `retry.schedule(() => reconnect())`, on successful open it calls `retry.reset()`, and on intentional close it calls `retry.cancel()`.
 
 You can test the retry behavior in the demo application using the two "Test Retry" buttons, which simulate different failure scenarios (server-initiated close vs forceful connection drop).
+
+## EventLogTerminal (Custom Control)
+
+An in-app terminal-like event log control with color-coded entries, auto-scroll, and the ability to automatically wire up to any `EventProvider` via `connectSource()`.
+
+See the full documentation in [frontend/webapp/control/README.md](./frontend/webapp/control/README.md).
 
 ## F.A.Q
 

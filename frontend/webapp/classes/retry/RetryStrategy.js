@@ -5,6 +5,15 @@
  * A reusable exponential backoff retry strategy for scheduling reconnection attempts
  * or any other operation that should be retried with increasing delays.
  *
+ * Extends `EventProvider` so consumers can listen to retry lifecycle events
+ * without coupling to the internals of the retry logic.
+ *
+ * Fired events:
+ *   - "scheduled": Fired when a retry is scheduled. Parameters: `{ attempt, delay }`
+ *   - "maxAttemptsReached": Fired when the maximum number of attempts has been reached
+ *     and no further retries will be made. Parameters: `{ attempts }`
+ *   - "reset": Fired when the strategy is reset to its initial state.
+ *
  * How it works:
  * On each call to `schedule()`, the internal delay doubles (starting from `initialDelay`)
  * until it reaches `maxDelay`. A random jitter (between 0 and `maxJitter` ms) is added
@@ -19,11 +28,16 @@
  * ```js
  * const retry = new RetryStrategy({ initialDelay: 1000, maxAttempts: 5 });
  *
+ * retry.attachEvent("scheduled", (event) => {
+ *     console.log(`Retry #${event.getParameter("attempt")} in ${event.getParameter("delay")}ms`);
+ * });
+ *
+ * retry.attachEvent("maxAttemptsReached", () => {
+ *     console.log("Giving up.");
+ * });
+ *
  * function onConnectionLost() {
- *     const scheduled = retry.schedule(() => reconnect());
- *     if (!scheduled) {
- *         Log.warning("Giving up after max attempts.");
- *     }
+ *     retry.schedule(() => reconnect());
  * }
  *
  * function onConnectionEstablished() {
@@ -35,7 +49,7 @@
  * @see {@link https://dev.to/jeroendk/how-to-implement-a-random-exponential-backoff-algorithm-in-javascript-18n6|Dev.to}
  * @see {@link https://advancedweb.hu/how-to-implement-an-exponential-backoff-retry-strategy-in-javascript/|Advanced Web}
  */
-sap.ui.define(["sap/ui/base/Object"], (BaseObject) => {
+sap.ui.define(["sap/ui/base/EventProvider"], (EventProvider) => {
     "use strict";
 
     /**
@@ -46,7 +60,7 @@ sap.ui.define(["sap/ui/base/Object"], (BaseObject) => {
      * @property {number} [maxJitter=3000] Maximum random jitter in ms added to each delay
      */
 
-    return BaseObject.extend(
+    return EventProvider.extend(
         "org.mrb.ui5websockets.classes.retry.RetryStrategy",
         /** @lends org.mrb.ui5websockets.classes.retry.RetryStrategy.prototype */ {
             /**
@@ -55,13 +69,13 @@ sap.ui.define(["sap/ui/base/Object"], (BaseObject) => {
              * All settings are optional and fall back to sensible defaults if omitted.
              *
              * @param {org.mrb.ui5websockets.classes.retry.RetryStrategySettings} [settings] Configuration
-             * @see sap.ui.base.Object#constructor
+             * @see sap.ui.base.EventProvider#constructor
              * @override
              * @public
              * @constructor
              */
             constructor: function (settings) {
-                BaseObject.constructor.apply(this);
+                EventProvider.apply(this);
 
                 const config = {
                     initialDelay: 1000,
@@ -93,12 +107,17 @@ sap.ui.define(["sap/ui/base/Object"], (BaseObject) => {
              * Doubles the current delay (up to `maxDelay`), adds random jitter, increments the
              * attempt counter, and calls `fn` after the computed delay.
              *
+             * Fires a "scheduled" event with parameters `{ attempt, delay }` when a retry
+             * is scheduled, or a "maxAttemptsReached" event with `{ attempts }` when the
+             * maximum has been reached.
+             *
              * @param {function} fn The function to call after the backoff delay
              * @returns {boolean} `true` if the retry was scheduled, `false` if max attempts have been reached
              * @public
              */
             schedule(fn) {
                 if (this._attempts >= this._maxAttempts) {
+                    this.fireEvent("maxAttemptsReached", { attempts: this._attempts });
                     this.reset();
                     return false;
                 }
@@ -110,6 +129,7 @@ sap.ui.define(["sap/ui/base/Object"], (BaseObject) => {
                 this._attempts++;
 
                 const delay = this._currentDelay + Math.floor(Math.random() * this._maxJitter);
+                this.fireEvent("scheduled", { attempt: this._attempts, delay: delay });
                 this._timeout = setTimeout(fn, delay);
                 return true;
             },
@@ -121,6 +141,8 @@ sap.ui.define(["sap/ui/base/Object"], (BaseObject) => {
              * starts with the initial delay and zero attempts.
              * Also cancels any currently pending retry timeout.
              *
+             * Fires a "reset" event.
+             *
              * @public
              */
             reset() {
@@ -128,6 +150,7 @@ sap.ui.define(["sap/ui/base/Object"], (BaseObject) => {
                 this._attempts = 0;
                 clearTimeout(this._timeout);
                 this._timeout = null;
+                this.fireEvent("reset");
             },
 
             /**
@@ -159,12 +182,12 @@ sap.ui.define(["sap/ui/base/Object"], (BaseObject) => {
              *
              * The object must not be used anymore after destroy was called.
              *
-             * @see sap.ui.base.Object#destroy
+             * @see sap.ui.base.EventProvider#destroy
              * @public
              */
             destroy() {
                 this.cancel();
-                BaseObject.prototype.destroy.apply(this);
+                EventProvider.prototype.destroy.apply(this);
             },
         },
     );
