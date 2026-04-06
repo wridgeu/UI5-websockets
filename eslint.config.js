@@ -50,7 +50,6 @@ export default [
             "prefer-object-spread": "error",
             "prefer-template": "error",
             "radix": "off",
-            "spaced-comment": "error",
         },
     },
     {
