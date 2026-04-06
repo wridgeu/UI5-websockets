@@ -101,6 +101,16 @@ sap.ui.define(
                 },
 
                 /**
+                 * Whether a WebSocket connection is currently active.
+                 *
+                 * @returns {boolean} `true` if a WebSocket instance exists
+                 * @public
+                 */
+                isConnected() {
+                    return this._webSocket !== null;
+                },
+
+                /**
                  * Return the EventingFacade/Wrapper
                  *
                  * Can work completely without it by attaching handlers directly
