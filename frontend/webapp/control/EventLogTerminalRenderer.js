@@ -74,11 +74,11 @@ sap.ui.define([], () => {
             oRm.openStart("pre").class("eventLogTerminal-pre").openEnd();
 
             // Render each log entry from the aggregation.
-            // Pass the control's custom type resolver for custom log types.
+            // Use the control's renderer API to resolve custom log types.
+            const api = oControl._getRendererApi();
             const aEntries = oControl.getEntries();
             aEntries.forEach((oEntry) => {
-                const sType = oEntry.getType();
-                const config = oControl._getLogTypeConfig(sType);
+                const config = api.getLogTypeConfig(oEntry.getType());
                 this.renderEntry(oRm, oEntry, config);
             });
 
