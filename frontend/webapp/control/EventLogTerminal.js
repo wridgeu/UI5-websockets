@@ -212,6 +212,22 @@ sap.ui.define(
             },
 
             /**
+             * Returns the renderer API contract.
+             *
+             * Formalizes which private methods the renderer is allowed to call,
+             * making the dependency between control and renderer explicit.
+             * This prevents accidental coupling to other internals.
+             *
+             * @returns {{getLogTypeConfig: function(string): {icon: string, cssClass: string}}} The renderer API
+             * @private
+             */
+            _getRendererApi() {
+                return {
+                    getLogTypeConfig: (sType) => this._getLogTypeConfig(sType),
+                };
+            },
+
+            /**
              * Connect an EventProvider as a log source.
              *
              * Attaches to the specified events on the source and automatically logs
