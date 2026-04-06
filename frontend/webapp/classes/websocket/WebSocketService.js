@@ -20,6 +20,7 @@ sap.ui.define(
         "org/mrb/ui5websockets/classes/websocket/type/WebSocketMessageAction",
         "org/mrb/ui5websockets/classes/websocket/type/WebSocketCloseCode",
         "org/mrb/ui5websockets/classes/websocket/WebSocketEventFacade",
+        "org/mrb/ui5websockets/classes/retry/RetryStrategy",
     ],
     /**
      * @param {typeof sap.ui.base.EventProvider} EventProvider
@@ -29,13 +30,10 @@ sap.ui.define(
      * @param {typeof org.mrb.ui5websockets.classes.websocket.type.WebSocketMessageAction} MessageAction
      * @param {typeof org.mrb.ui5websockets.classes.websocket.type.WebSocketCloseCode} CloseCode
      * @param {typeof org.mrb.ui5websockets.classes.websocket.WebSocketEventFacade} WebSocketEventFacade
+     * @param {typeof org.mrb.ui5websockets.classes.retry.RetryStrategy} RetryStrategy
      */
-    (EventProvider, SAPPcPWebSocket, WebSocket, Log, MessageAction, CloseCode, WebSocketEventFacade) => {
+    (EventProvider, SAPPcPWebSocket, WebSocket, Log, MessageAction, CloseCode, WebSocketEventFacade, RetryStrategy) => {
         "use strict";
-
-        const ONE_SECOND = 1_000;
-        const SIXTEEN_SECONDS = 16_000;
-        const TEN_TIMES = 10;
 
         return EventProvider.extend(
             "org.mrb.ui5websockets.classes.websocket.WebSocketService",
@@ -54,15 +52,8 @@ sap.ui.define(
                     this._logger = Log.getLogger("WebSocketService.js");
                     // could be loaded async in getEventingFacade but we assume it is necessary to use this
                     this._eventingHelper = new WebSocketEventFacade(this);
-                    // reconnect attempts
-                    this._currentReconnectAttempts = null;
-                    this._maxReconnectAttempts = TEN_TIMES;
-                    // reonnect delay (backoff)
-                    this._initialReconnectDelay = ONE_SECOND;
-                    this._currentReconnectDelay = this._initialReconnectDelay;
-                    this._maximumReconnectDelay = SIXTEEN_SECONDS;
-                    // reconnect timeout-timer (set if we currently try to reconnect)
-                    this._reconnectTimeout = null;
+                    // retry strategy for reconnection with exponential backoff
+                    this._retryStrategy = new RetryStrategy();
                     // internal websocket instance
                     this._webSocket = null;
                 },
@@ -100,11 +91,12 @@ sap.ui.define(
                 },
 
                 /**
-                 * Return the EventingHelper/Wrapper
+                 * Return the EventingFacade/Wrapper
                  *
                  * Can work completely without it by attaching handlers directly
                  * to the WebSocketService-Instance via `attachEvent('eventName', fn, ...)`.
                  *
+                 * @returns {org.mrb.ui5websockets.classes.websocket.WebSocketEventFacade} The eventing facade
                  * @public
                  */
                 getEventingFacade() {
@@ -137,14 +129,12 @@ sap.ui.define(
                         return;
                     }
 
-                    // In case we're within a reconnect attempt, clear timeout (asap)
-                    clearTimeout(this._reconnectTimeout);
+                    // In case we're within a reconnect attempt, cancel it
+                    this._retryStrategy.cancel();
                     // close the connection
                     this._webSocket.close();
                     // Reset some of the internal state
                     this._webSocket = null;
-                    this._currentReconnectAttempts = null;
-                    this._currentReconnectDelay = this._initialReconnectDelay;
                 },
 
                 /**
@@ -158,32 +148,20 @@ sap.ui.define(
                 destroy() {
                     this._webSocket = null;
                     this._logger = null;
-                    clearTimeout(this._reconnectTimeout);
+                    this._retryStrategy.destroy();
                     EventProvider.destroy.apply(this);
                 },
 
                 /**
                  * Reconnect handling.
                  *
-                 * The reconnect handling is based on the exponential backoff strategy.
-                 * @see {@link https://en.wikipedia.org/wiki/Exponential_backoff|Wikipedia}
-                 * Default implementation based on:
-                 * @see {@link https://dev.to/jeroendk/how-to-implement-a-random-exponential-backoff-algorithm-in-javascript-18n6|Dev.to}
+                 * Delegates scheduling to the RetryStrategy which handles
+                 * exponential backoff, jitter, and max attempt tracking.
                  *
                  * @private
                  */
                 _reconnect() {
                     this._webSocket = null;
-                    if (this._currentReconnectAttempts === this._maxReconnectAttempts) {
-                        this._logger.warning("Max amount of reconnect attempts reached.");
-                        this._currentReconnectAttempts = null;
-                        this._currentReconnectDelay = this._initialReconnectDelay;
-                        return;
-                    }
-                    if (this._currentReconnectDelay < this._maximumReconnectDelay) {
-                        this._currentReconnectDelay *= 2;
-                    }
-                    this._currentReconnectAttempts += 1;
                     this.setupConnection(this._connectionUrl, this._usePcP);
                 },
 
@@ -195,7 +173,7 @@ sap.ui.define(
                  */
                 _onOpen(event) {
                     this.fireEvent("open", { data: event });
-                    this._currentReconnectDelay = this._initialReconnectDelay;
+                    this._retryStrategy.reset();
                     this._logger.info("WebSocket connection opened!", `Event: "Open"`);
                 },
 
@@ -218,22 +196,22 @@ sap.ui.define(
                     this.fireEvent("close", { data: event });
                     this._logger.info("WebSocket connection has been closed!", `Event: "Close"`);
                     if (event.getParameter("code") === CloseCode.NORMAL_CLOSURE) {
-                        // In case we close our manually connection,
+                        // In case we close our connection manually,
                         // we do not want to trigger a reconnect!
                         this._logger.info("Connection manually closed.", `Event: "Close"`);
                         return;
                     }
                     this._logger.info("Connection closed abnormally, trying to reconnect.", `Event: "Close"`);
-                    this._reconnectTimeout = setTimeout(
-                        () => {
-                            try {
-                                this._reconnect();
-                            } catch (error) {
-                                this._logger.error("An Error occured when trying to reconnect!", error);
-                            }
-                        },
-                        this._currentReconnectDelay + Math.floor(Math.random() * 3000),
-                    );
+                    const scheduled = this._retryStrategy.schedule(() => {
+                        try {
+                            this._reconnect();
+                        } catch (error) {
+                            this._logger.error("An Error occured when trying to reconnect!", error);
+                        }
+                    });
+                    if (!scheduled) {
+                        this._logger.warning("Max amount of reconnect attempts reached.");
+                    }
                 },
 
                 /**
