@@ -184,18 +184,24 @@ sap.ui.define(
              * warning, info, debug, trace, input, output). This allows consumers to
              * define domain-specific log types at the application level.
              *
-             * The icon can be either a Unicode character (e.g. "\u25B6") or a
-             * UI5 icon URI (e.g. "sap-icon://accept"). When a UI5 icon URI is used,
-             * the renderer will create an `sap.ui.core.Icon` inline.
+             * Icons should be Unicode characters (e.g. "\u25B6", "\u21BB", "\u2714").
+             * The terminal renders log entries inside a monospace `<pre>` element,
+             * which means `sap-icon://` URIs are not supported as they would require
+             * inline `sap.ui.core.Icon` controls that break the monospace text layout.
+             * Unicode characters integrate naturally with the terminal's text-based rendering.
+             *
+             * The CSS class is applied to the message span element and can reference
+             * either a class from the control's own CSS, a UI5 theme class, or a
+             * custom application-level class.
              *
              * Usage:
              * ```js
              * terminal.registerLogType("retry", { icon: "\u21BB", cssClass: "myApp-logRetry" });
-             * terminal.registerLogType("connect", { icon: "sap-icon://connected", cssClass: "myApp-logConnect" });
+             * terminal.registerLogType("connect", { icon: "\u2714", cssClass: "myApp-logConnect" });
              * ```
              *
              * @param {string} sType The log type name
-             * @param {{icon: string, cssClass: string}} oConfig The icon and CSS class for this type
+             * @param {{icon: string, cssClass: string}} oConfig Unicode icon character and CSS class for this type
              * @public
              */
             registerLogType(sType, oConfig) {
