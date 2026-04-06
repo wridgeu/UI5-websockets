@@ -21,35 +21,39 @@
     background-color: transparent;
 }
 
-/* Log entry type colors */
+/* Log entry type colors - aligned with UI5 semantic colors */
 .eventLogTerminal-timestamp {
-    color: var(--sapPositiveColor, #6a9955);
+    color: var(--sapNeutralColor, #6a9955);
 }
 
-.eventLogTerminal-open {
+.eventLogTerminal-success {
     color: var(--sapPositiveTextColor, #4ec9b0);
-}
-
-.eventLogTerminal-close {
-    color: var(--sapNeutralTextColor, #d4d4d4);
-}
-
-.eventLogTerminal-send {
-    color: var(--sapInformativeTextColor, #569cd6);
-}
-
-.eventLogTerminal-receive {
-    color: var(--sapAccentColor4, #dcdcaa);
-}
-
-.eventLogTerminal-retry {
-    color: var(--sapCriticalTextColor, #ce9178);
 }
 
 .eventLogTerminal-error {
     color: var(--sapNegativeTextColor, #f44747);
 }
 
+.eventLogTerminal-warning {
+    color: var(--sapCriticalTextColor, #ce9178);
+}
+
 .eventLogTerminal-info {
+    color: var(--sapNeutralTextColor, #d4d4d4);
+}
+
+.eventLogTerminal-debug {
     color: var(--sapNeutralColor, #808080);
+}
+
+.eventLogTerminal-trace {
+    color: var(--sapNeutralBorderColor, #666666);
+}
+
+.eventLogTerminal-input {
+    color: var(--sapInformativeTextColor, #569cd6);
+}
+
+.eventLogTerminal-output {
+    color: var(--sapAccentColor4, #dcdcaa);
 }

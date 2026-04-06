@@ -20,10 +20,10 @@ sap.ui.define(
                 // All events from the service (including forwarded retry lifecycle events)
                 // are automatically logged without manual _logToTerminal calls.
                 terminal.connectSource(this.wsService, {
-                    open: { type: "open", message: "Connection opened." },
+                    open: { type: "success", message: "Connection opened." },
                     error: { type: "error", message: "WebSocket error occurred." },
                     close: {
-                        type: "close",
+                        type: "warning",
                         message: (oEvent) => {
                             const data = oEvent.getParameter("data");
                             const code = data ? data.getParameter("code") : "unknown";
@@ -31,7 +31,7 @@ sap.ui.define(
                         },
                     },
                     retryScheduled: {
-                        type: "retry",
+                        type: "warning",
                         message: (oEvent) => {
                             const attempt = oEvent.getParameter("attempt");
                             const delay = oEvent.getParameter("delay");
@@ -39,7 +39,7 @@ sap.ui.define(
                         },
                     },
                     retryMaxAttemptsReached: { type: "error", message: "Max retry attempts reached. Giving up." },
-                    retryReset: { type: "info", message: "Retry strategy reset (connection recovered)." },
+                    retryReset: { type: "success", message: "Retry strategy reset (connection recovered)." },
                 });
 
                 // Facade events still need manual handlers for UI feedback (MessageBox, Toast)
@@ -65,7 +65,7 @@ sap.ui.define(
              * Send some message (anything).
              */
             sendPing() {
-                this._logToTerminal("send", "Sent: Ping");
+                this._logToTerminal("input", "Sent: Ping");
                 this.wsService.send("Ping");
             },
 
@@ -86,7 +86,7 @@ sap.ui.define(
              * picks up and begins reconnection attempts with exponential backoff.
              */
             testRetryBackend() {
-                this._logToTerminal("retry", "Sending 'Disconnect' to backend (server will drop connection with code 1001)...");
+                this._logToTerminal("debug", "Sending 'Disconnect' to backend (server will drop connection with code 1001)...");
                 this.wsService.send("Disconnect");
             },
 
@@ -99,7 +99,7 @@ sap.ui.define(
              * frontend, simulating a network failure or server crash.
              */
             testRetryFrontend() {
-                this._logToTerminal("retry", "Sending 'Terminate' to backend (server will kill connection without close frame)...");
+                this._logToTerminal("debug", "Sending 'Terminate' to backend (server will kill connection without close frame)...");
                 this.wsService.send("Terminate");
             },
 
@@ -119,7 +119,7 @@ sap.ui.define(
              */
             _onSomeEvent(event) {
                 const data = event.getParameter("data");
-                this._logToTerminal("receive", `some-action: "${data}"`);
+                this._logToTerminal("output", `some-action: "${data}"`);
                 MessageBox.show(data);
             },
 
@@ -129,7 +129,7 @@ sap.ui.define(
              */
             _onPingPong(event) {
                 const data = event.getParameter("data");
-                this._logToTerminal("receive", `pingpong: "${data}"`);
+                this._logToTerminal("output", `pingpong: "${data}"`);
                 MessageToast.show(data);
             },
 

@@ -29,12 +29,14 @@ You can always call `log()` directly for full control over what appears in the t
 ```js
 onInit: function () {
     const terminal = this.byId("eventLog");
-    terminal.log("open", "Connection established.");
-    terminal.log("send", "Sent: Ping");
-    terminal.log("receive", "Received: Pong!");
+    terminal.log("success", "Connection established.");
+    terminal.log("input", "Sent: Ping");
+    terminal.log("output", "Received: Pong!");
     terminal.log("error", "Something went wrong.");
-    terminal.log("retry", "Retrying in 2000ms...");
-    terminal.log("info", "Some informational message.");
+    terminal.log("warning", "Connection lost, retrying...");
+    terminal.log("info", "Informational message.");
+    terminal.log("debug", "Debug-level detail.");
+    terminal.log("trace", "Trace-level detail.");
     terminal.clear();
 }
 ```
@@ -59,10 +61,10 @@ onInit: function () {
     // (retryScheduled, retryMaxAttemptsReached, retryReset) through
     // its own eventing, so everything can be connected to a single source.
     terminal.connectSource(wsService, {
-        "open": { type: "open", message: "Connection opened." },
+        "open": { type: "success", message: "Connection opened." },
         "error": { type: "error", message: "WebSocket error occurred." },
         "close": {
-            type: "close",
+            type: "warning",
             message: function (oEvent) {
                 const data = oEvent.getParameter("data");
                 const code = data ? data.getParameter("code") : "unknown";
@@ -70,13 +72,13 @@ onInit: function () {
             }
         },
         "retryScheduled": {
-            type: "retry",
+            type: "warning",
             message: function (oEvent) {
                 return "Retry #" + oEvent.getParameter("attempt") + " in " + oEvent.getParameter("delay") + "ms...";
             }
         },
         "retryMaxAttemptsReached": { type: "error", message: "Max retry attempts reached." },
-        "retryReset": { type: "info", message: "Retry strategy reset." }
+        "retryReset": { type: "success", message: "Retry strategy reset." }
     });
 }
 ```
@@ -102,17 +104,36 @@ terminal.disconnectAllSources();
 
 ## Log Types
 
-| Type | Icon | Color | Use for |
-|---|---|---|---|
-| `open` | ▶ | Green | Connection established |
-| `close` | ✕ | Gray | Connection closed |
-| `send` | ▶ | Blue | Outgoing message |
-| `receive` | ◀ | Yellow | Incoming message |
-| `retry` | ↻ | Orange | Reconnection attempt |
-| `error` | ✖ | Red | Error occurred |
-| `info` | • | Dim | Informational |
+Types are aligned with UI5 log levels (`sap.base.Log.Level`) plus additional semantic types for common use cases. They are intentionally generic and not tied to any specific domain.
 
-Colors use UI5 theme CSS variables (e.g. `--sapPositiveTextColor`, `--sapNegativeTextColor`) with fallbacks for non-themed contexts.
+| Type | Icon | Color | Aligns with | Use for |
+|---|---|---|---|---|
+| `success` | ✔ | Green | - | Positive outcome, successful operation |
+| `error` | ✖ | Red | `Log.Level.ERROR` | Error condition |
+| `warning` | ⚠ | Orange | `Log.Level.WARNING` | Warning, attention needed |
+| `info` | • | Neutral | `Log.Level.INFO` | Informational message |
+| `debug` | ‣ | Dim | `Log.Level.DEBUG` | Debug-level detail |
+| `trace` | · | Very dim | `Log.Level.TRACE` | Trace-level detail |
+| `input` | ▶ | Blue | - | Outgoing data (sent message, request) |
+| `output` | ◀ | Yellow | - | Incoming data (received message, response) |
+
+Unknown types fall back to `info` styling. Colors use UI5 theme CSS variables (e.g. `--sapPositiveTextColor`, `--sapNegativeTextColor`) with fallbacks for non-themed contexts.
+
+### Custom Log Types
+
+You can register additional log types at the application level via `registerLogType`. Custom types take precedence over built-in types. The icon can be a Unicode character or a string.
+
+```js
+// Register domain-specific log types with Unicode icons
+terminal.registerLogType("retry", { icon: "\u21BB", cssClass: "myApp-logRetry" });
+terminal.registerLogType("connect", { icon: "\u25B6", cssClass: "myApp-logConnect" });
+
+// Then use them like any built-in type
+terminal.log("retry", "Retrying in 2000ms...");
+terminal.log("connect", "Connection established.");
+```
+
+Resolution order: custom type -> built-in type -> `info` fallback.
 
 ## Technical Details
 
