@@ -109,7 +109,7 @@ Not at all. Any Controller/Object can just take the "WebSocketService"-Instance 
 
 ### Are you using valid JSDoc?
 
-I'm really trying. Still not sure how to properly use it in custom projects (with custom namespaces etc.), other than basic JS types or defining custom Types ([@typedef](https://jsdoc.app/tags-typedef.html)) per file and including them everywhere (can't be the rigth/best approach, right?).
+Yes! For custom types in UI5 projects (with custom namespaces etc.), [`@typedef`](https://jsdoc.app/tags-typedef.html) is the way to go. You either define the type in the file where it's used, or define it in one central file and import it in others via `@import` (or the older `@typedef {import("./path").MyType} MyType` pattern). This is indeed the standard approach — there's no hidden "better way".
 
 ## NodeJS WebSocket Server for Testing
 
