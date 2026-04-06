@@ -1,4 +1,16 @@
-# UI5 with simple WebSocket Implementation
+<h1 align="center">WebSocket Demo Implementation</h1>
+
+<p align="center">
+A demo repository showcasing WebSocket and SAP PCP (Push Channel Protocol) integration with SAPUI5, featuring a reusable retry strategy with exponential backoff, an eventing facade, and a custom terminal-like event log control.
+</p>
+
+---
+
+| Demo overview | Reconnection with greeting |
+|---|---|
+| ![Demo overview showing the event log terminal with connection, messaging, and retry events](./readme/Example%20Overview%201.png) | ![Reconnection scenario showing the backend greeting after a successful retry](./readme/Example%20Overview%202.png) |
+
+---
 
 ## Usage
 
@@ -58,7 +70,7 @@ The way I'm using it though, I'm not so sure if this "better maintainability" is
 
 ## Design/Idea Overview
 
-I'm horrible with UML, so don't judge me. 😅 Some of the classes mentioned here aren't "real" compositions as they're not directly passed in through the constructor, but you get the gist.
+I'm horrible with UML, so don't judge me. Some of the classes mentioned here aren't "real" compositions as they're not directly passed in through the constructor, but you get the gist.
 
 ![class_diagramm](./readme/class_uml.png)
 
