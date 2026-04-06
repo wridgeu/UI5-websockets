@@ -136,14 +136,22 @@ sap.ui.define(
                  */
                 this._mCustomLogTypes = {};
                 /**
-                 * Tracks connected event sources for automatic cleanup on destroy.
-                 * Uses WeakRef to avoid holding strong references to sources that
-                 * may be destroyed before this control. If a source is garbage collected,
-                 * its entries are silently skipped during cleanup.
+                 * Registry of connected event sources and their handlers.
+                 * Uses a WeakMap so the terminal does not prevent sources from
+                 * being garbage collected if they are destroyed before the terminal.
                  * @private
-                 * @type {Array<{sourceRef: WeakRef<sap.ui.base.EventProvider>, event: string, handler: function}>}
+                 * @type {WeakMap<sap.ui.base.EventProvider, Array<{event: string, handler: function}>>}
                  */
-                this._aConnectedSources = [];
+                this._mSourceHandlers = new WeakMap();
+                /**
+                 * Tracks connected sources for iteration in disconnectAllSources.
+                 * WeakMap is not iterable, so we maintain a parallel array of WeakRefs
+                 * to the source objects. This array is only used for iteration and
+                 * does not prevent garbage collection.
+                 * @private
+                 * @type {Array<WeakRef<sap.ui.base.EventProvider>>}
+                 */
+                this._aSourceRefs = [];
             },
 
             /**
@@ -280,7 +288,7 @@ sap.ui.define(
              * @public
              */
             connectSource(oSource, mEventMapping) {
-                const oSourceRef = new WeakRef(oSource);
+                const aHandlers = [];
                 const aEvents = Object.keys(mEventMapping);
                 aEvents.forEach((sEvent) => {
                     const vConfig = mEventMapping[sEvent];
@@ -288,16 +296,18 @@ sap.ui.define(
                     const vMessage = typeof vConfig === "string" ? sEvent : vConfig.message;
 
                     const fnHandler = (oEvent) => {
-                        // Check if the source is still alive before logging
-                        if (oSourceRef.deref()) {
-                            const sMessage = typeof vMessage === "function" ? vMessage(oEvent) : vMessage;
-                            this.log(sType, sMessage);
-                        }
+                        const sMessage = typeof vMessage === "function" ? vMessage(oEvent) : vMessage;
+                        this.log(sType, sMessage);
                     };
 
                     oSource.attachEvent(sEvent, fnHandler);
-                    this._aConnectedSources.push({ sourceRef: oSourceRef, event: sEvent, handler: fnHandler });
+                    aHandlers.push({ event: sEvent, handler: fnHandler });
                 });
+
+                // Store handlers in WeakMap (keyed by source, does not prevent GC)
+                this._mSourceHandlers.set(oSource, aHandlers);
+                // Track the source reference for iteration in disconnectAllSources
+                this._aSourceRefs.push(new WeakRef(oSource));
             },
 
             /**
@@ -308,17 +318,17 @@ sap.ui.define(
              * @public
              */
             disconnectSource(oSource) {
-                this._aConnectedSources = this._aConnectedSources.filter((oEntry) => {
-                    const oRef = oEntry.sourceRef.deref();
-                    if (oRef === oSource) {
-                        oRef.detachEvent(oEntry.event, oEntry.handler);
-                        return false;
-                    }
-                    // Also remove entries whose source has been garbage collected
-                    if (!oRef) {
-                        return false;
-                    }
-                    return true;
+                const aHandlers = this._mSourceHandlers.get(oSource);
+                if (aHandlers) {
+                    aHandlers.forEach((oEntry) => {
+                        oSource.detachEvent(oEntry.event, oEntry.handler);
+                    });
+                    this._mSourceHandlers.delete(oSource);
+                }
+                // Prune the source refs array (remove this source and any GC'd refs)
+                this._aSourceRefs = this._aSourceRefs.filter((oRef) => {
+                    const oSrc = oRef.deref();
+                    return oSrc && oSrc !== oSource;
                 });
             },
 
@@ -331,13 +341,19 @@ sap.ui.define(
              * @public
              */
             disconnectAllSources() {
-                this._aConnectedSources.forEach((oEntry) => {
-                    const oRef = oEntry.sourceRef.deref();
-                    if (oRef) {
-                        oRef.detachEvent(oEntry.event, oEntry.handler);
+                this._aSourceRefs.forEach((oRef) => {
+                    const oSource = oRef.deref();
+                    if (oSource) {
+                        const aHandlers = this._mSourceHandlers.get(oSource);
+                        if (aHandlers) {
+                            aHandlers.forEach((oEntry) => {
+                                oSource.detachEvent(oEntry.event, oEntry.handler);
+                            });
+                            this._mSourceHandlers.delete(oSource);
+                        }
                     }
                 });
-                this._aConnectedSources = [];
+                this._aSourceRefs = [];
             },
 
             /**
