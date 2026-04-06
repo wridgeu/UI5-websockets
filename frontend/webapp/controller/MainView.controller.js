@@ -161,7 +161,7 @@ sap.ui.define(
              * Used for user-initiated actions (button clicks, manual messages).
              * WebSocket and RetryStrategy events are logged automatically via connectSource.
              *
-             * @param {string} sType One of: open, close, send, receive, retry, error, info
+             * @param {string} sType Built-in: success, error, warning, info, debug, trace, input, output
              * @param {string} sMessage The log message text
              * @private
              */

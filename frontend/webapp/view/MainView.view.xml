@@ -1,25 +1,30 @@
 <mvc:View controllerName="org.mrb.ui5websockets.controller.MainView" xmlns:mvc="sap.ui.core.mvc" xmlns:control="org.mrb.ui5websockets.control" displayBlock="true" xmlns="sap.m">
     <Page id="page" title="{i18n>title}" titleAlignment="Center" enableScrolling="true" class="sapUiResponsivePadding--content">
+        <subHeader>
+            <Toolbar>
+                <ToolbarSpacer />
+                <Text text="Use the buttons to test WebSocket connections, messaging, and retry behavior." />
+                <ToolbarSpacer />
+            </Toolbar>
+        </subHeader>
         <content>
-            <MessageStrip
-                id="infoStrip"
-                text="Use the buttons to test WebSocket connections, messaging, and retry behavior. All events are traced in the log below."
-                type="Information"
-                showIcon="true"
-                showCloseButton="false"
-                class="sapUiSmallMarginBottom"
-            />
-            <HBox renderType="Bare" justifyContent="Center" alignItems="Center" class="sapUiSmallMarginBottom">
-                <Button text="Initialize a WS Connection" press=".setup" type="Emphasized" />
-                <Button class="sapUiSmallMarginBeginEnd" text="Send Ping" press=".sendPing" />
-                <Button text="Close Connection" press=".closeConnection" />
-            </HBox>
-            <HBox renderType="Bare" justifyContent="Center" alignItems="Center">
-                <Button text="Test Retry (Server Close)" press=".testRetryBackend" type="Attention" />
-                <Button class="sapUiSmallMarginBegin" text="Test Retry (Connection Drop)" press=".testRetryFrontend" type="Attention" />
-            </HBox>
-            <HBox renderType="Bare" justifyContent="Center" class="sapUiSmallMarginBottom sapUiTinyMarginTop">
-                <Text text="Requires an active connection." class="sapUiTinyMarginTop" />
+            <HBox justifyContent="Center" class="sapUiSmallMarginTopBottom" wrap="Wrap">
+                <VBox alignItems="Center" class="sapUiSmallMarginEnd">
+                    <Title text="Connection" level="H5" class="sapUiSmallMarginBottom" />
+                    <HBox>
+                        <Button text="Initialize" press=".setup" type="Emphasized" icon="sap-icon://connected" />
+                        <Button class="sapUiSmallMarginBeginEnd" text="Send Ping" press=".sendPing" icon="sap-icon://outgoing-call" />
+                        <Button text="Close" press=".closeConnection" icon="sap-icon://disconnected" />
+                    </HBox>
+                </VBox>
+                <VBox alignItems="Center" class="sapUiSmallMarginBegin">
+                    <Title text="Retry Testing" level="H5" class="sapUiSmallMarginBottom" />
+                    <HBox>
+                        <Button text="Server Close" press=".testRetryBackend" type="Attention" icon="sap-icon://decline" />
+                        <Button class="sapUiSmallMarginBegin" text="Connection Drop" press=".testRetryFrontend" type="Attention" icon="sap-icon://error" />
+                    </HBox>
+                    <Text text="Requires an active connection." class="sapUiTinyMarginTop" />
+                </VBox>
             </HBox>
             <Panel id="logPanel">
                 <headerToolbar>

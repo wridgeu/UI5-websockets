@@ -8,7 +8,7 @@ sap.ui.define([], () => {
      * @see {@link https://www.iana.org/assignments/websocket/websocket.xhtml|RFC}
      *
      * @public
-     * @enum {string}
+     * @enum {number}
      */
     return Object.freeze({
         /**
