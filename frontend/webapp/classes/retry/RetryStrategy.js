@@ -127,13 +127,14 @@ sap.ui.define(["sap/ui/base/EventProvider"], (EventProvider) => {
                     return false;
                 }
 
+                this._attempts++;
+
+                // Use current delay for this attempt, then double for the next one
+                const delay = this._currentDelay + Math.floor(Math.random() * this._maxJitter);
                 if (this._currentDelay < this._maxDelay) {
                     this._currentDelay *= 2;
                 }
 
-                this._attempts++;
-
-                const delay = this._currentDelay + Math.floor(Math.random() * this._maxJitter);
                 this.fireEvent("scheduled", { attempt: this._attempts, delay: delay });
                 this._timeout = setTimeout(fn, delay);
                 return true;
