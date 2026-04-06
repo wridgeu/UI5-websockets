@@ -56,6 +56,10 @@ sap.ui.define(
              * Establish a connection to the locally running WS (NodeJS) Server
              */
             setup() {
+                if (this.wsService.isConnected()) {
+                    this._logToTerminal("warning", "Connection already active. Close it first before re-initializing.");
+                    return;
+                }
                 this._logToTerminal("info", "Connecting to ws://localhost:8081/ ...");
                 // could be some sort of "login"-view
                 this.wsService.setupConnection("//localhost:8081/", false);
