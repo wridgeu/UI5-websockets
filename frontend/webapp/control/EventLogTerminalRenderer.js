@@ -30,7 +30,7 @@ sap.ui.define([], () => {
     });
 
     /**
-     * @namespace org.mrb.ui5websockets.control
+     * @memberof org.mrb.ui5websockets.control
      */
     const EventLogTerminalRenderer = {
         apiVersion: 4,
@@ -58,7 +58,7 @@ sap.ui.define([], () => {
             // Render each log entry from the aggregation
             const aEntries = oControl.getEntries();
             aEntries.forEach((oEntry) => {
-                EventLogTerminalRenderer.renderEntry(oRm, oEntry);
+                this.renderEntry(oRm, oEntry);
             });
 
             oRm.close("pre");

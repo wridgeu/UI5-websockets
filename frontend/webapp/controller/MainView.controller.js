@@ -14,17 +14,40 @@ sap.ui.define(
              */
             onInit: function () {
                 this.wsService = this.getWebSocketService();
-                // could be an entirely different controller from the "login"
+                const terminal = this.byId("eventLog");
+
+                // Wire up WebSocket and retry events to the terminal via connectSource.
+                // All events from the service (including forwarded retry lifecycle events)
+                // are automatically logged without manual _logToTerminal calls.
+                terminal.connectSource(this.wsService, {
+                    open: { type: "open", message: "Connection opened." },
+                    error: { type: "error", message: "WebSocket error occurred." },
+                    close: {
+                        type: "close",
+                        message: (oEvent) => {
+                            const data = oEvent.getParameter("data");
+                            const code = data ? data.getParameter("code") : "unknown";
+                            return `Connection closed (code: ${code}).`;
+                        },
+                    },
+                    retryScheduled: {
+                        type: "retry",
+                        message: (oEvent) => {
+                            const attempt = oEvent.getParameter("attempt");
+                            const delay = oEvent.getParameter("delay");
+                            return `Retry #${attempt} scheduled in ${delay}ms...`;
+                        },
+                    },
+                    retryMaxAttemptsReached: { type: "error", message: "Max retry attempts reached. Giving up." },
+                    retryReset: { type: "info", message: "Retry strategy reset (connection recovered)." },
+                });
+
+                // Facade events still need manual handlers for UI feedback (MessageBox, Toast)
                 const facade = this.wsService.getEventingFacade();
                 facade.attachSomeEvent(this._onSomeEvent, this);
                 facade.attachPingPong(this._onPingPong, this);
-                facade.attachClose(this._onWsClose, this);
 
-                // attach to lower-level events for logging
-                this.wsService.attachEvent("open", this._onWsOpen, this);
-                this.wsService.attachEvent("error", this._onWsError, this);
-
-                this._logToTerminal("info", "Application initialized. Click 'Initialize a WS Connection' to start.");
+                terminal.log("info", "Application initialized. Click 'Initialize a WS Connection' to start.");
             },
 
             // -- Button Handlers --
@@ -88,38 +111,22 @@ sap.ui.define(
                 this._logToTerminal("info", "Log cleared.");
             },
 
-            // -- WebSocket Event Handlers --
+            // -- Facade Event Handlers (for UI feedback) --
 
-            /** @private */
-            _onWsOpen() {
-                this._logToTerminal("open", "Connection opened.");
-            },
-
-            /** @private */
-            _onWsError() {
-                this._logToTerminal("error", "WebSocket error occurred.");
-            },
-
-            /** @private */
-            _onWsClose(event) {
-                const data = event.getParameter("data");
-                const code = data ? data.getParameter("code") : "unknown";
-                this._logToTerminal("close", `Connection closed (code: ${code}).`);
-
-                // Only show retry info for abnormal closures (not 1000)
-                if (code !== 1000) {
-                    this._logToTerminal("retry", "Abnormal close detected. RetryStrategy will attempt to reconnect...");
-                }
-            },
-
-            /** @private */
+            /**
+             * @param {sap.ui.base.Event} event The event object
+             * @private
+             */
             _onSomeEvent(event) {
                 const data = event.getParameter("data");
                 this._logToTerminal("receive", `some-action: "${data}"`);
                 MessageBox.show(data);
             },
 
-            /** @private */
+            /**
+             * @param {sap.ui.base.Event} event The event object
+             * @private
+             */
             _onPingPong(event) {
                 const data = event.getParameter("data");
                 this._logToTerminal("receive", `pingpong: "${data}"`);
@@ -131,14 +138,17 @@ sap.ui.define(
             /**
              * Log a message to the in-app EventLogTerminal control.
              *
-             * @param {string} type One of: open, close, send, receive, retry, error, info
-             * @param {string} message The log message text
+             * Used for user-initiated actions (button clicks, manual messages).
+             * WebSocket and RetryStrategy events are logged automatically via connectSource.
+             *
+             * @param {string} sType One of: open, close, send, receive, retry, error, info
+             * @param {string} sMessage The log message text
              * @private
              */
-            _logToTerminal(type, message) {
+            _logToTerminal(sType, sMessage) {
                 const terminal = this.byId("eventLog");
                 if (terminal) {
-                    terminal.log(type, message);
+                    terminal.log(sType, sMessage);
                 }
             },
         });

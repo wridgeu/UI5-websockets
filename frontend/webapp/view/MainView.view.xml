@@ -19,7 +19,7 @@
                 <Button class="sapUiSmallMarginBegin" text="Test Retry (Connection Drop)" press=".testRetryFrontend" type="Attention" />
             </HBox>
             <HBox renderType="Bare" justifyContent="Center" class="sapUiSmallMarginBottom sapUiTinyMarginTop">
-                <Label text="Requires an active connection." design="Light" class="sapUiTinyMarginTop" />
+                <Text text="Requires an active connection." class="sapUiTinyMarginTop" />
             </HBox>
             <Panel id="logPanel">
                 <headerToolbar>
