@@ -9,6 +9,9 @@
  * abnormal close code (1001 - Going Away), which triggers the retry mechanism
  * on the frontend side.
  *
+ * The server tracks how many times a client address has connected to differentiate
+ * between initial connections and reconnections in the greeting message.
+ *
  * We basically use simple straight up WebSocket but pretend that this one specific message
  * somewhat looks like a PCP one. ^^
  *
@@ -20,8 +23,16 @@ import { WebSocketServer } from 'ws';
 
 const wss = new WebSocketServer({ port: 8081 });
 
-wss.on('connection', (ws) => {
-  console.log('connection opened, hi');
+/** @type {Map<string, number>} Track connection count per client address */
+const connectionCounts = new Map();
+
+wss.on('connection', (ws, req) => {
+  const clientAddress = req.socket.remoteAddress;
+  const count = (connectionCounts.get(clientAddress) || 0) + 1;
+  connectionCounts.set(clientAddress, count);
+
+  const isReconnect = count > 1;
+  console.log(`${isReconnect ? 'reconnection' : 'connection'} opened (#${count}), hi`);
 
   ws.on('message', (data) => {
     const message = data.toString();
@@ -44,17 +55,27 @@ wss.on('connection', (ws) => {
     console.log('sent: %s', payload);
   });
 
-  ws.on('close', (data) => {
-    console.log('received: %s', data);
+  ws.on('close', (code) => {
+    console.log('close code: %s', code);
+    // Reset connection tracker on normal closure (1000)
+    // so the next connection is treated as a fresh start
+    if (code === 1000) {
+      connectionCounts.delete(clientAddress);
+      console.log('normal closure, reset connection tracker');
+    }
     console.log('connection closed, bye');
   });
 
-  // initial payload as answer for the connection build-up
+  // greeting message differs for initial vs reconnection
+  const greetingMessage = isReconnect
+    ? `Welcome back! Reconnection #${count - 1} successful.`
+    : "Hey there from the WebSocket Backend! You have successfully started a connection.";
+
   const payload = JSON.stringify({
     pcpFields: {
       action: "some-action",
     },
-    data: "Hey there from the WebSocket Backend! You have successfully started a connection 🥴"
+    data: greetingMessage
   });
   ws.send(payload);
 });
