@@ -10,5 +10,8 @@
     "lib": [
       "es2022"
     ]
-  }
+  },
+  "include": [
+    "frontend/webapp/**/*.js"
+  ]
 }
