@@ -125,6 +125,13 @@ sap.ui.define(
                 /** @private */
                 this._fnOnResize = this._onResize.bind(this);
                 /**
+                 * Custom log type overrides registered via `registerLogType`.
+                 * Takes precedence over the default types in the renderer.
+                 * @private
+                 * @type {Object<string, {icon: string, cssClass: string}>}
+                 */
+                this._mCustomLogTypes = {};
+                /**
                  * Tracks connected event sources for automatic cleanup on destroy.
                  * Uses WeakRef to avoid holding strong references to sources that
                  * may be destroyed before this control. If a source is garbage collected,
@@ -164,6 +171,44 @@ sap.ui.define(
                     this._sResizeHandlerId = null;
                 }
                 this.disconnectAllSources();
+            },
+
+            /**
+             * Register a custom log type with its own icon and CSS class.
+             *
+             * Custom types take precedence over the built-in types (success, error,
+             * warning, info, debug, trace, input, output). This allows consumers to
+             * define domain-specific log types at the application level.
+             *
+             * The icon can be either a Unicode character (e.g. "\u25B6") or a
+             * UI5 icon URI (e.g. "sap-icon://accept"). When a UI5 icon URI is used,
+             * the renderer will create an `sap.ui.core.Icon` inline.
+             *
+             * Usage:
+             * ```js
+             * terminal.registerLogType("retry", { icon: "\u21BB", cssClass: "myApp-logRetry" });
+             * terminal.registerLogType("connect", { icon: "sap-icon://connected", cssClass: "myApp-logConnect" });
+             * ```
+             *
+             * @param {string} sType The log type name
+             * @param {{icon: string, cssClass: string}} oConfig The icon and CSS class for this type
+             * @public
+             */
+            registerLogType(sType, oConfig) {
+                this._mCustomLogTypes[sType] = oConfig;
+            },
+
+            /**
+             * Resolve a log type to its icon and CSS class configuration.
+             *
+             * Checks custom types first, then falls back to the renderer's built-in types.
+             *
+             * @param {string} sType The log type name
+             * @returns {{icon: string, cssClass: string}} The type configuration
+             * @private
+             */
+            _getLogTypeConfig(sType) {
+                return this._mCustomLogTypes[sType] || EventLogTerminalRenderer.getLogTypeConfig(sType);
             },
 
             /**
@@ -307,7 +352,7 @@ sap.ui.define(
                 // Append directly to the pre element if already rendered
                 const pre = this._getPreElement();
                 if (pre) {
-                    const config = EventLogTerminalRenderer.getLogTypeConfig(sType);
+                    const config = this._getLogTypeConfig(sType);
 
                     const span = document.createElement("span");
                     span.className = "eventLogTerminal-timestamp";
