@@ -2,7 +2,7 @@
 
 ## Usage
 
-1. Have NodeJS installed (at least v16)
+1. Have NodeJS installed (at least v24)
 2. Install all dependencies aka.
    ```sh
    npm i
@@ -42,7 +42,7 @@ Of course one would need to also consider:
 - Closing the Tab
 - etc.
 
-Most of these scenarios, especially with Internet Explorer, are just a dead end. Nothing much you can do without doing it dirty/hacky. *If you have some Best Practices though, go ahead and shoot me a message, I'm happy & eager to learn*. If you're lucky enough to use the [Beacon API](https://developer.mozilla.org/en-US/docs/Web/API/Beacon_API) go ahead!
+Most of these scenarios are tricky to handle cleanly. *If you have some Best Practices though, go ahead and shoot me a message, I'm happy & eager to learn*. The [Beacon API](https://developer.mozilla.org/en-US/docs/Web/API/Beacon_API) can help with some of these cases.
 
 So what did I do? I created a "WebSocketService" that does exactly what I need it to do. Not as flexible, resiliant and overall good designed as I'd like it to be but well, there are deadlines to be kept. The Service I'm using in this repository is a bit different as it uses some sort of "EventFacade", or "Registry" if you will(?), to hide some of the `attachEvent` logic behind an object and forward these EventRegistrations to the actual Service to not bloat up the WebSocketService object itself too much.
 
@@ -117,7 +117,7 @@ I'm using a simple NodeJS WebSocket Package calles "[ws](https://github.com/webs
 
 ## Credits
 
-This project has been generated with 💙 and [easy-ui5](https://github.com/SAP).
+This project has been generated with 💙 and [easy-ui5](https://github.com/SAP/generator-easy-ui5).
 
 I'm standing on the shoulders of giants. Thanks.
 
