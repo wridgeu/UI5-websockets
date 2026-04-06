@@ -69,6 +69,10 @@ sap.ui.define(
              * Send some message (anything).
              */
             sendPing() {
+                if (!this.wsService.isConnected()) {
+                    this._logToTerminal("warning", "No active connection. Initialize a connection first.");
+                    return;
+                }
                 this._logToTerminal("input", "Sent: Ping");
                 this.wsService.send("Ping");
             },
@@ -77,6 +81,10 @@ sap.ui.define(
              * Close the connection (normal closure, code 1000).
              */
             closeConnection() {
+                if (!this.wsService.isConnected()) {
+                    this._logToTerminal("warning", "No active connection.");
+                    return;
+                }
                 this._logToTerminal("info", "Closing connection (normal closure)...");
                 this.wsService.close();
             },
@@ -90,6 +98,10 @@ sap.ui.define(
              * picks up and begins reconnection attempts with exponential backoff.
              */
             testRetryBackend() {
+                if (!this.wsService.isConnected()) {
+                    this._logToTerminal("warning", "No active connection. Initialize a connection first.");
+                    return;
+                }
                 this._logToTerminal("debug", "Sending 'Disconnect' to backend (server will drop connection with code 1001)...");
                 this.wsService.send("Disconnect");
             },
@@ -103,6 +115,10 @@ sap.ui.define(
              * frontend, simulating a network failure or server crash.
              */
             testRetryFrontend() {
+                if (!this.wsService.isConnected()) {
+                    this._logToTerminal("warning", "No active connection. Initialize a connection first.");
+                    return;
+                }
                 this._logToTerminal("debug", "Sending 'Terminate' to backend (server will kill connection without close frame)...");
                 this.wsService.send("Terminate");
             },

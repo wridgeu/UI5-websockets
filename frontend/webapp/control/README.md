@@ -121,12 +121,16 @@ Unknown types fall back to `info` styling. Colors use UI5 theme CSS variables (e
 
 ### Custom Log Types
 
-You can register additional log types at the application level via `registerLogType`. Custom types take precedence over built-in types. The icon can be a Unicode character or a string.
+You can register additional log types at the application level via `registerLogType`. Custom types take precedence over built-in types.
+
+Icons must be **Unicode characters** (e.g. `"\u21BB"`, `"\u2714"`, `"\u26A0"`). The terminal renders entries inside a monospace `<pre>` element, so `sap-icon://` URIs are not supported as they would require inline `sap.ui.core.Icon` controls that break the text-based layout. Unicode characters integrate naturally with monospace rendering.
+
+The CSS class is applied to the message span and can reference the control's own classes, UI5 theme classes, or custom application-level classes.
 
 ```js
 // Register domain-specific log types with Unicode icons
 terminal.registerLogType("retry", { icon: "\u21BB", cssClass: "myApp-logRetry" });
-terminal.registerLogType("connect", { icon: "\u25B6", cssClass: "myApp-logConnect" });
+terminal.registerLogType("connect", { icon: "\u2714", cssClass: "myApp-logConnect" });
 
 // Then use them like any built-in type
 terminal.log("retry", "Retrying in 2000ms...");

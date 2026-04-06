@@ -181,7 +181,7 @@ sap.ui.define(
                  * @private
                  */
                 _reconnect() {
-                    this._webSocket = null;
+                    // _webSocket is already null (set in _onClose)
                     this.setupConnection(this._connectionUrl, this._usePcP);
                 },
 
@@ -215,6 +215,9 @@ sap.ui.define(
                 _onClose(event) {
                     this.fireEvent("close", { data: event });
                     this._logger.info("WebSocket connection has been closed!", `Event: "Close"`);
+                    // Null out the WebSocket immediately so isConnected() reflects
+                    // the real state and prevents sending on a closed socket
+                    this._webSocket = null;
                     if (event.getParameter("code") === CloseCode.NORMAL_CLOSURE) {
                         // In case we close our connection manually,
                         // we do not want to trigger a reconnect!

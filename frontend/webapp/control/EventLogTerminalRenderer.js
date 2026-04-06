@@ -26,6 +26,10 @@ sap.ui.define([], () => {
      * Domain-specific semantics (e.g. "connection opened") are expressed
      * through the message text and the type mapping in `connectSource`.
      *
+     * Icons are Unicode characters rendered inline within the monospace `<pre>` element.
+     * `sap-icon://` URIs are not supported as they require `sap.ui.core.Icon` controls
+     * which are incompatible with the terminal's text-based rendering approach.
+     *
      * @type {Object<string, {icon: string, cssClass: string}>}
      */
     const LOG_TYPES = Object.freeze({
