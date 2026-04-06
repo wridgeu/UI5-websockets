@@ -164,21 +164,21 @@ I'm using a simple NodeJS WebSocket Package calles "[ws](https://github.com/webs
 
 ## Credits
 
-This project has been generated with 💙 and [easy-ui5](https://github.com/SAP/generator-easy-ui5).
+This project has been generated with 💙 and [easy-ui5](https://github.com/ui5-community/generator-easy-ui5).
 
 I'm standing on the shoulders of giants. Thanks.
 
-- [Gregor Wolf](https://github.com/gregorwolf) PCP: https://blogs.sap.com/2015/09/07/abap-push-channel-messaging-channel-and-sapui5-demo-application/
+- [Gregor Wolf](https://github.com/gregorwolf) PCP: https://community.sap.com/t5/-/-/m-p/13160973
   - https://github.com/gregorwolf/apcecho
-- [Holger Schäfer](https://mobile.twitter.com/hschaefer123): https://btp.udina.de/development/websocket.html#sapui5
+- [Holger Schäfer](https://x.com/hschaefer123): https://btp.udina.de/development/websocket.html#sapui5
   - Exponential Backoff
     - https://en.wikipedia.org/wiki/Exponential_backoff
     - https://dev.to/jeroendk/how-to-implement-a-random-exponential-backoff-algorithm-in-javascript-18n6
     - https://advancedweb.hu/how-to-implement-an-exponential-backoff-retry-strategy-in-javascript/
-- Cool WebSocket Extension (Chrome): https://chrome.google.com/webstore/detail/websocket-test-client/fgponpodhbmadfljofbimhhlengambbn?hl=en
-- Introduction to ABAP Channels: https://blogs.sap.com/2014/11/27/introduction-to-abap-channels/
-- [Masoud's](https://people.sap.com/masoud.aghadavoodijolfaei) Blog Series
-  1. https://blogs.sap.com/2013/11/18/websocket-communication-using-abap-push-channels/
-  2. https://blogs.sap.com/2014/03/26/abap-channels-part-2-publish-subscribe-messaging-using-abap-messaging-channels/
-  3. https://blogs.sap.com/2014/04/14/abap-channels-part-3-collaboration-scenario-using-abap-messaging-and-abap-push-channels/
-  4. PCP Protocol Spec - https://blogs.sap.com/2015/07/27/specification-of-the-push-channel-protocol-pcp/
+- Cool WebSocket Extension (Chrome): https://chromewebstore.google.com/detail/websocket-test-client/fgponpodhbmadfljofbimhhlengambbn?hl=en
+- Introduction to ABAP Channels: https://community.sap.com/t5/-/-/m-p/13097517
+- Masoud's Blog Series
+  1. https://community.sap.com/t5/-/-/m-p/13012856
+  2. https://community.sap.com/t5/-/-/m-p/13055496
+  3. https://community.sap.com/t5/-/-/m-p/13050895
+  4. PCP Protocol Spec - https://community.sap.com/t5/-/-/m-p/13137541
