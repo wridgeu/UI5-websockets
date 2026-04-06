@@ -118,7 +118,12 @@ sap.ui.define(["sap/ui/base/EventProvider"], (EventProvider) => {
             schedule(fn) {
                 if (this._attempts >= this._maxAttempts) {
                     this.fireEvent("maxAttemptsReached", { attempts: this._attempts });
-                    this.reset();
+                    // Reset internal state without firing the "reset" event,
+                    // since this is not a recovery but a give-up scenario
+                    this._currentDelay = this._initialDelay;
+                    this._attempts = 0;
+                    clearTimeout(this._timeout);
+                    this._timeout = null;
                     return false;
                 }
 

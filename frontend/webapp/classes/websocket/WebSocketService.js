@@ -54,6 +54,16 @@ sap.ui.define(
                     this._eventingHelper = new WebSocketEventFacade(this);
                     // retry strategy for reconnection with exponential backoff
                     this._retryStrategy = new RetryStrategy();
+                    // forward retry lifecycle events through this service's eventing
+                    this._retryStrategy.attachEvent("scheduled", (event) => {
+                        this.fireEvent("retryScheduled", event.getParameters());
+                    });
+                    this._retryStrategy.attachEvent("maxAttemptsReached", (event) => {
+                        this.fireEvent("retryMaxAttemptsReached", event.getParameters());
+                    });
+                    this._retryStrategy.attachEvent("reset", () => {
+                        this.fireEvent("retryReset");
+                    });
                     // internal websocket instance
                     this._webSocket = null;
                 },

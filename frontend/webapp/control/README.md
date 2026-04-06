@@ -54,8 +54,13 @@ onInit: function () {
         "error": "error"
     });
 
-    // Advanced mapping: custom messages per event
+    // Advanced mapping with custom messages and retry events.
+    // The WebSocketService forwards RetryStrategy lifecycle events
+    // (retryScheduled, retryMaxAttemptsReached, retryReset) through
+    // its own eventing, so everything can be connected to a single source.
     terminal.connectSource(wsService, {
+        "open": { type: "open", message: "Connection opened." },
+        "error": { type: "error", message: "WebSocket error occurred." },
         "close": {
             type: "close",
             message: function (oEvent) {
@@ -63,20 +68,15 @@ onInit: function () {
                 const code = data ? data.getParameter("code") : "unknown";
                 return "Connection closed (code: " + code + ").";
             }
-        }
-    });
-
-    // Connect a RetryStrategy instance
-    const retryStrategy = wsService.getRetryStrategy();
-    terminal.connectSource(retryStrategy, {
-        "scheduled": {
+        },
+        "retryScheduled": {
             type: "retry",
             message: function (oEvent) {
                 return "Retry #" + oEvent.getParameter("attempt") + " in " + oEvent.getParameter("delay") + "ms...";
             }
         },
-        "maxAttemptsReached": { type: "error", message: "Max retry attempts reached." },
-        "reset": { type: "info", message: "Retry strategy reset." }
+        "retryMaxAttemptsReached": { type: "error", message: "Max retry attempts reached." },
+        "retryReset": { type: "info", message: "Retry strategy reset." }
     });
 }
 ```
