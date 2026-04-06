@@ -13,14 +13,18 @@
  * The renderer lives in a separate file (EventLogTerminalRenderer.js) and uses apiVersion 4
  * for optimal rendering performance.
  *
- * Supported log types and their visual indicators:
- *   - "open"    (green)  - connection established
- *   - "close"   (gray)   - connection closed
- *   - "send"    (blue)   - outgoing message
- *   - "receive" (yellow) - incoming message
- *   - "retry"   (orange) - reconnection attempt
- *   - "error"   (red)    - error occurred
- *   - "info"    (dim)    - informational message
+ * Built-in log types (aligned with sap.base.Log.Level):
+ *   - "success" (green)  - positive outcome, successful operation
+ *   - "error"   (red)    - error condition
+ *   - "warning" (orange) - warning, attention needed
+ *   - "info"    (neutral)- informational message
+ *   - "debug"   (dim)    - debug-level detail
+ *   - "trace"   (v.dim)  - trace-level detail
+ *   - "input"   (blue)   - outgoing data (sent message, request)
+ *   - "output"  (yellow) - incoming data (received message, response)
+ *
+ * Custom types can be registered via `registerLogType()`.
+ * Unknown types fall back to "info" styling.
  *
  * Usage in XML Views:
  * ```xml
@@ -349,7 +353,7 @@ sap.ui.define(
              * then appends the rendered line directly to the DOM for performance
              * (avoiding a full re-render on every log call).
              *
-             * @param {string} sType One of: open, close, send, receive, retry, error, info
+             * @param {string} sType Built-in: success, error, warning, info, debug, trace, input, output. Custom types via registerLogType().
              * @param {string} sMessage The log message text
              * @public
              */
@@ -438,15 +442,19 @@ sap.ui.define(
 
             /**
              * Format the current time as HH:MM:SS for log timestamps.
-             * Uses the Temporal API (available in Chrome 144+, Firefox 139+)
-             * for modern, unambiguous time formatting.
+             * Uses the Temporal API where available (Chrome 144+, Firefox 139+,
+             * Safari 18.4+) with a Date-based fallback for older browsers.
              *
              * @returns {string} Formatted time string
              * @private
              */
             _formatTimestamp() {
-                const now = Temporal.Now.plainTimeISO();
-                return `${String(now.hour).padStart(2, "0")}:${String(now.minute).padStart(2, "0")}:${String(now.second).padStart(2, "0")}`;
+                if (typeof Temporal !== "undefined") {
+                    const now = Temporal.Now.plainTimeISO();
+                    return `${String(now.hour).padStart(2, "0")}:${String(now.minute).padStart(2, "0")}:${String(now.second).padStart(2, "0")}`;
+                }
+                const now = new Date();
+                return [now.getHours(), now.getMinutes(), now.getSeconds()].map((n) => String(n).padStart(2, "0")).join(":");
             },
         });
     },

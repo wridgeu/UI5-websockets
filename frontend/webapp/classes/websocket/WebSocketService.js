@@ -159,7 +159,7 @@ sap.ui.define(
                     this._webSocket = null;
                     this._logger = null;
                     this._retryStrategy.destroy();
-                    EventProvider.destroy.apply(this);
+                    EventProvider.prototype.destroy.apply(this);
                 },
 
                 /**

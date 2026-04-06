@@ -18,7 +18,9 @@ sap.ui.define(["sap/ui/core/Element"], (Element) => {
             properties: {
                 /**
                  * The log entry type, which determines the icon and color.
-                 * Supported values: "open", "close", "send", "receive", "retry", "error", "info".
+                 * Built-in types: "success", "error", "warning", "info", "debug", "trace", "input", "output".
+                 * Custom types can be registered via `EventLogTerminal.registerLogType()`.
+                 * Unknown types fall back to "info" styling.
                  */
                 type: { type: "string", defaultValue: "info" },
 
