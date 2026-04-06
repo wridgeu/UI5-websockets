@@ -1,9 +1,35 @@
-<mvc:View controllerName="org.mrb.ui5websockets.controller.MainView" xmlns:mvc="sap.ui.core.mvc" displayBlock="true" xmlns="sap.m">
-    <Page id="page" title="{i18n>title}" titleAlignment="Center">
-        <HBox renderType="Bare" justifyContent="Center" height="100%" alignItems="Center">
-            <Button text="Initialize a WS Connection" press=".setup" />
-            <Button class="sapUiSmallMarginBeginEnd" text="Send Ping" press=".sendPing" />
-            <Button text="Close Connection" press=".closeConnection" />
-        </HBox>
+<mvc:View controllerName="org.mrb.ui5websockets.controller.MainView" xmlns:mvc="sap.ui.core.mvc" xmlns:control="org.mrb.ui5websockets.control" displayBlock="true" xmlns="sap.m">
+    <Page id="page" title="{i18n>title}" titleAlignment="Center" enableScrolling="true" class="sapUiResponsivePadding--content">
+        <content>
+            <MessageStrip
+                id="infoStrip"
+                text="Use the buttons to test WebSocket connections, messaging, and retry behavior. All events are traced in the log below."
+                type="Information"
+                showIcon="true"
+                showCloseButton="false"
+                class="sapUiSmallMarginBottom"
+            />
+            <HBox renderType="Bare" justifyContent="Center" alignItems="Center" class="sapUiSmallMarginBottom">
+                <Button text="Initialize a WS Connection" press=".setup" type="Emphasized" />
+                <Button class="sapUiSmallMarginBeginEnd" text="Send Ping" press=".sendPing" />
+                <Button text="Close Connection" press=".closeConnection" />
+            </HBox>
+            <HBox renderType="Bare" justifyContent="Center" alignItems="Center" class="sapUiSmallMarginBottom">
+                <Button text="Test Retry (Backend Drop)" press=".testRetryBackend" type="Attention" />
+                <Button class="sapUiSmallMarginBegin" text="Test Retry (Frontend Close)" press=".testRetryFrontend" type="Attention" />
+            </HBox>
+            <Panel id="logPanel">
+                <headerToolbar>
+                    <Toolbar>
+                        <Title text="Event Log" level="H5" />
+                        <ToolbarSpacer />
+                        <Button icon="sap-icon://delete" tooltip="Clear log" press=".clearLog" type="Transparent" />
+                    </Toolbar>
+                </headerToolbar>
+                <content>
+                    <control:EventLogTerminal id="eventLog" height="300px" />
+                </content>
+            </Panel>
+        </content>
     </Page>
 </mvc:View>

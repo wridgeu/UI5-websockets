@@ -1,0 +1,52 @@
+.eventLogTerminal {
+    border-radius: var(--sapElement_BorderCornerRadius, 0.25rem);
+    overflow: hidden;
+    box-sizing: border-box;
+}
+
+.eventLogTerminal-scroll {
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.eventLogTerminal-pre {
+    margin: 0;
+    padding: 0.75rem;
+    min-height: 100%;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+/* Log entry type colors */
+.eventLogTerminal-timestamp {
+    color: var(--sapPositiveColor, #6a9955);
+}
+
+.eventLogTerminal-open {
+    color: var(--sapPositiveTextColor, #4ec9b0);
+}
+
+.eventLogTerminal-close {
+    color: var(--sapNeutralTextColor, #d4d4d4);
+}
+
+.eventLogTerminal-send {
+    color: var(--sapInformativeTextColor, #569cd6);
+}
+
+.eventLogTerminal-receive {
+    color: var(--sapAccentColor4, #dcdcaa);
+}
+
+.eventLogTerminal-retry {
+    color: var(--sapCriticalTextColor, #ce9178);
+}
+
+.eventLogTerminal-error {
+    color: var(--sapNegativeTextColor, #f44747);
+}
+
+.eventLogTerminal-info {
+    color: var(--sapNeutralColor, #808080);
+}
