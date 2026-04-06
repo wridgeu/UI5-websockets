@@ -15,7 +15,7 @@ sap.ui.define(
             onInit: function () {
                 this.wsService = this.getWebSocketService();
                 // could be an entirely different controller from the "login"
-                const wsEventingHelper = this.wsService.getEventingHelper();
+                const wsEventingHelper = this.wsService.getEventingFacade();
                 wsEventingHelper.attachSomeEvent(this.myHandlerMethod, this);
                 wsEventingHelper.attachPingPong(this.myPingHandlerMethod, this);
                 wsEventingHelper.attachClose(this.myCloseHandlerMethod, this);

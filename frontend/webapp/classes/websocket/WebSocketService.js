@@ -56,7 +56,7 @@ sap.ui.define(
 				EventProvider.apply(this);
 
 				this._logger = Log.getLogger("WebSocketService.js");
-				// could be loaded async in getEventingHelper but we assume it is necessary to use this
+				// could be loaded async in getEventingFacade but we assume it is necessary to use this
 				this._eventingHelper = new WebSocketEventFacade(this);
 				// reconnect attempts
 				this._currentReconnectAttempts = null;
@@ -116,7 +116,7 @@ sap.ui.define(
 			 * 
 			 * @public
 			 */
-			getEventingHelper() {
+			getEventingFacade() {
 				return this._eventingHelper
 			},
 

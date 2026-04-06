@@ -75,7 +75,7 @@ myWsService.detachEvent(ENUM.action, this.myHandlerFunction);
 you could do it like this:
 
 ```js
-const myFacade = this.getWebSocketService().getWebSocketEventFacade();
+const myFacade = this.getWebSocketService().getEventingFacade();
 myFacade.attachMyActionEvent(this.myHandlerFunction)
 myFacade.detachMyActionEvent(this.myHandlerFunction)
 ```
