@@ -84,6 +84,31 @@ A similar approach can be seen [here](https://github.com/SAP/openui5/blob/0df008
 
 There are a few events which haven't had the honor to be taken into the ENUM. Namely all the events that do not map to a particular action that the frontend necessarily *wants* to listen to. The ENUM is just used as some sort of "contract", to get some sort of consistency with whatever comes from the backend. Therefore some of the rather technical/fallback events like `close`, `open` and the general `message` are not considered here. That is not a problem though, as these can just be taken into account within the "EventFacade".
 
+## RetryStrategy (Exponential Backoff)
+
+The `RetryStrategy` (`classes/retry/RetryStrategy.js`) is a standalone, reusable utility that handles reconnection attempts with exponential backoff and jitter. It is decoupled from the WebSocketService and can be used for any operation that needs retry logic.
+
+How it works:
+1. On each call to `schedule(fn)`, the internal delay doubles (starting from `initialDelay`) until it reaches `maxDelay`.
+2. A random jitter (between 0 and `maxJitter` ms) is added to each delay to prevent multiple clients from retrying at the exact same time (the "thundering herd" problem).
+3. After `maxAttempts` retries, `schedule()` returns `false` and no further retries are made.
+4. Calling `reset()` restores the strategy to its initial state. This should be done after a successful connection.
+
+All settings are configurable via the constructor:
+
+```js
+const retry = new RetryStrategy({
+    initialDelay: 1000,  // start with 1 second
+    maxDelay: 16000,     // cap at 16 seconds
+    maxAttempts: 10,     // give up after 10 tries
+    maxJitter: 3000      // add 0-3 seconds of random jitter
+});
+```
+
+The WebSocketService uses it internally: on abnormal close it calls `retry.schedule(() => reconnect())`, on successful open it calls `retry.reset()`, and on intentional close it calls `retry.cancel()`.
+
+You can test the retry behavior in the demo application using the two "Test Retry" buttons, which simulate different failure scenarios (server-initiated close vs forceful connection drop).
+
 ## F.A.Q
 
 ### Why is the connection setup (WebSocket Instantiation) not happening in the constructor?

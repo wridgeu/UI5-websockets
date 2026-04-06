@@ -44,6 +44,12 @@ wss.on('connection', (ws, req) => {
       return;
     }
 
+    if (message === 'Terminate') {
+      console.log('client requested terminate, killing connection without close frame');
+      ws.terminate();
+      return;
+    }
+
     if (message !== 'Ping') return;
     const payload = JSON.stringify({
       pcpFields: {
