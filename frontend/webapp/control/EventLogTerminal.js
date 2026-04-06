@@ -126,9 +126,11 @@ sap.ui.define(
                 this._fnOnResize = this._onResize.bind(this);
                 /**
                  * Tracks connected event sources for automatic cleanup on destroy.
-                 * Each entry is { source, event, handler }.
+                 * Uses WeakRef to avoid holding strong references to sources that
+                 * may be destroyed before this control. If a source is garbage collected,
+                 * its entries are silently skipped during cleanup.
                  * @private
-                 * @type {Array<{source: sap.ui.base.EventProvider, event: string, handler: function}>}
+                 * @type {Array<{sourceRef: WeakRef<sap.ui.base.EventProvider>, event: string, handler: function}>}
                  */
                 this._aConnectedSources = [];
             },
@@ -207,6 +209,7 @@ sap.ui.define(
              * @public
              */
             connectSource(oSource, mEventMapping) {
+                const oSourceRef = new WeakRef(oSource);
                 const aEvents = Object.keys(mEventMapping);
                 aEvents.forEach((sEvent) => {
                     const vConfig = mEventMapping[sEvent];
@@ -214,12 +217,15 @@ sap.ui.define(
                     const vMessage = typeof vConfig === "string" ? sEvent : vConfig.message;
 
                     const fnHandler = (oEvent) => {
-                        const sMessage = typeof vMessage === "function" ? vMessage(oEvent) : vMessage;
-                        this.log(sType, sMessage);
+                        // Check if the source is still alive before logging
+                        if (oSourceRef.deref()) {
+                            const sMessage = typeof vMessage === "function" ? vMessage(oEvent) : vMessage;
+                            this.log(sType, sMessage);
+                        }
                     };
 
                     oSource.attachEvent(sEvent, fnHandler);
-                    this._aConnectedSources.push({ source: oSource, event: sEvent, handler: fnHandler });
+                    this._aConnectedSources.push({ sourceRef: oSourceRef, event: sEvent, handler: fnHandler });
                 });
             },
 
@@ -232,8 +238,13 @@ sap.ui.define(
              */
             disconnectSource(oSource) {
                 this._aConnectedSources = this._aConnectedSources.filter((oEntry) => {
-                    if (oEntry.source === oSource) {
-                        oEntry.source.detachEvent(oEntry.event, oEntry.handler);
+                    const oRef = oEntry.sourceRef.deref();
+                    if (oRef === oSource) {
+                        oRef.detachEvent(oEntry.event, oEntry.handler);
+                        return false;
+                    }
+                    // Also remove entries whose source has been garbage collected
+                    if (!oRef) {
                         return false;
                     }
                     return true;
@@ -242,6 +253,7 @@ sap.ui.define(
 
             /**
              * Disconnect all event sources that were registered via `connectSource`.
+             * Silently skips sources that have already been garbage collected.
              *
              * Called automatically on control destruction.
              *
@@ -249,7 +261,10 @@ sap.ui.define(
              */
             disconnectAllSources() {
                 this._aConnectedSources.forEach((oEntry) => {
-                    oEntry.source.detachEvent(oEntry.event, oEntry.handler);
+                    const oRef = oEntry.sourceRef.deref();
+                    if (oRef) {
+                        oRef.detachEvent(oEntry.event, oEntry.handler);
+                    }
                 });
                 this._aConnectedSources = [];
             },
