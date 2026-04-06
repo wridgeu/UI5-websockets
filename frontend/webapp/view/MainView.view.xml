@@ -14,17 +14,12 @@
                 <Button class="sapUiSmallMarginBeginEnd" text="Send Ping" press=".sendPing" />
                 <Button text="Close Connection" press=".closeConnection" />
             </HBox>
-            <MessageStrip
-                id="retryHint"
-                text="You must first initialize a WebSocket connection before testing retry behavior."
-                type="Warning"
-                showIcon="true"
-                showCloseButton="false"
-                class="sapUiSmallMarginBottom"
-            />
-            <HBox renderType="Bare" justifyContent="Center" alignItems="Center" class="sapUiSmallMarginBottom">
-                <Button text="Test Retry (Backend Drop)" press=".testRetryBackend" type="Attention" />
-                <Button class="sapUiSmallMarginBegin" text="Test Retry (Frontend Close)" press=".testRetryFrontend" type="Attention" />
+            <HBox renderType="Bare" justifyContent="Center" alignItems="Center">
+                <Button text="Test Retry (Server Close)" press=".testRetryBackend" type="Attention" />
+                <Button class="sapUiSmallMarginBegin" text="Test Retry (Connection Drop)" press=".testRetryFrontend" type="Attention" />
+            </HBox>
+            <HBox renderType="Bare" justifyContent="Center" class="sapUiSmallMarginBottom sapUiTinyMarginTop">
+                <Label text="Requires an active connection." design="Light" class="sapUiTinyMarginTop" />
             </HBox>
             <Panel id="logPanel">
                 <headerToolbar>

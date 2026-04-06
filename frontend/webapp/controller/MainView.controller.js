@@ -68,22 +68,16 @@ sap.ui.define(
             },
 
             /**
-             * Test the retry mechanism by closing the connection from the frontend
-             * with an abnormal close code (1001).
+             * Test the retry mechanism by forcefully dropping the connection.
              *
-             * This bypasses the WebSocketService's `close()` method (which uses code 1000
-             * for normal closure) and directly closes the underlying WebSocket with a
-             * non-1000 code to simulate an unexpected disconnect.
+             * Sends a "Terminate" command to the backend which causes the server
+             * to call `ws.terminate()`, killing the connection without a close handshake.
+             * This results in a close event with code 1006 (Abnormal Closure) on the
+             * frontend, simulating a network failure or server crash.
              */
             testRetryFrontend() {
-                this._logToTerminal("retry", "Closing connection from frontend with abnormal code 1001...");
-                // Access the internal WebSocket to close with a non-normal code.
-                // The service's own close() uses 1000 which would not trigger a retry.
-                if (this.wsService._webSocket) {
-                    this.wsService._webSocket.close(1001, "Frontend-initiated abnormal close for testing");
-                } else {
-                    this._logToTerminal("error", "No active WebSocket connection to close.");
-                }
+                this._logToTerminal("retry", "Sending 'Terminate' to backend (server will kill connection without close frame)...");
+                this.wsService.send("Terminate");
             },
 
             /**
