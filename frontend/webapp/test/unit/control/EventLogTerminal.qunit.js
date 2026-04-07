@@ -406,6 +406,52 @@ sap.ui.define([
             "second entry's DOM node moved to position 0 (first was deleted)");
     });
 
+    QUnit.test("model entry without timestamp gets auto-generated timestamp in DOM", function (assert) {
+        const aData = this.oModel.getProperty("/logEntries").slice();
+        aData.push({ type: "info", message: "No timestamp provided" });
+        this.oModel.setProperty("/logEntries", aData);
+
+        const pre = getPre(this.oTerminal);
+        // Second entry's timestamp span is at index 4 (entry 1 × 4 nodes)
+        const sTimestamp = pre.childNodes[4].textContent;
+        assert.ok(sTimestamp, "timestamp is not empty");
+        assert.ok(/^\d{2}:\d{2}:\d{2}$/.test(sTimestamp),
+            "auto-generated timestamp matches HH:MM:SS format: " + sTimestamp);
+    });
+
+    QUnit.test("model entry with empty string timestamp gets auto-generated timestamp in DOM", function (assert) {
+        const aData = this.oModel.getProperty("/logEntries").slice();
+        aData.push({ type: "info", message: "Empty timestamp", timestamp: "" });
+        this.oModel.setProperty("/logEntries", aData);
+
+        const pre = getPre(this.oTerminal);
+        const sTimestamp = pre.childNodes[4].textContent;
+        assert.ok(sTimestamp, "timestamp is not empty despite empty string in model");
+        assert.ok(/^\d{2}:\d{2}:\d{2}$/.test(sTimestamp),
+            "auto-generated timestamp matches HH:MM:SS format: " + sTimestamp);
+    });
+
+    QUnit.test("model entry without type falls back to info styling", function (assert) {
+        const aData = this.oModel.getProperty("/logEntries").slice();
+        aData.push({ message: "No type provided", timestamp: "10:00:05" });
+        this.oModel.setProperty("/logEntries", aData);
+
+        const pre = getPre(this.oTerminal);
+        // Second entry's message span is at index 6 (entry 1 × 4 + 2)
+        const msgSpan = pre.childNodes[6];
+        assert.ok(msgSpan.classList.contains("eventLogTerminal-info"),
+            "falls back to info CSS class when type is missing");
+    });
+
+    QUnit.test("model entry without message renders empty message", function (assert) {
+        const aData = this.oModel.getProperty("/logEntries").slice();
+        aData.push({ type: "success", timestamp: "10:00:05" });
+        this.oModel.setProperty("/logEntries", aData);
+
+        assert.strictEqual(this.oTerminal.getEntries().length, 2, "entry still created");
+        assert.strictEqual(domEntryCount(this.oTerminal), 2, "entry still rendered");
+    });
+
     QUnit.test("replacing model data rebuilds from scratch", function (assert) {
         this.oModel.setProperty("/logEntries", [
             { type: "error", message: "Replaced A", timestamp: "11:00:00" },
@@ -449,6 +495,8 @@ sap.ui.define([
         assert.strictEqual(aData[0].type, "info");
         assert.strictEqual(aData[0].message, "Via log()");
         assert.ok(aData[0].timestamp, "timestamp is auto-generated");
+        assert.ok(/^\d{2}:\d{2}:\d{2}$/.test(aData[0].timestamp),
+            "timestamp matches HH:MM:SS format: " + aData[0].timestamp);
     });
 
     QUnit.test("log() entry appears in DOM via ECD path", function (assert) {
@@ -466,6 +514,25 @@ sap.ui.define([
         assert.strictEqual(this.oModel.getProperty("/logEntries").length, 0, "model cleared");
         assert.strictEqual(this.oTerminal.getEntries().length, 0, "aggregation cleared");
         assert.strictEqual(getPre(this.oTerminal).childNodes.length, 0, "DOM cleared");
+    });
+
+    QUnit.test("after unbindEntries(), log() falls back to imperative path", function (assert) {
+        // Verify binding is active
+        this.oTerminal.log("info", "While bound");
+        assert.strictEqual(this.oModel.getProperty("/logEntries").length, 1, "entry in model");
+
+        // Unbind
+        this.oTerminal.unbindEntries();
+        sap.ui.getCore().applyChanges();
+
+        // log() should now use the imperative path (direct aggregation, not model)
+        this.oTerminal.log("success", "After unbind");
+        assert.strictEqual(this.oModel.getProperty("/logEntries").length, 1,
+            "model unchanged — log() no longer pushes to it");
+        assert.strictEqual(this.oTerminal.getEntries().length, 1,
+            "entry added directly to aggregation");
+        assert.strictEqual(this.oTerminal.getEntries()[0].getMessage(), "After unbind",
+            "aggregation has the new entry");
     });
 
     // ── Module: connectSource() with Active Binding ──────────────────────
