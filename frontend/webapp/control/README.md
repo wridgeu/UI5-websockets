@@ -9,78 +9,66 @@ A custom UI5 control that renders an in-app terminal-like event log. It displays
 - `EventLogEntry.js` - Element for each log entry (extends `sap.ui.core.Element`)
 - `EventLogTerminal.css` - Control-owned styles using UI5 theme CSS variables
 
-## Usage in XML Views
+## Three Ways to Add Log Entries
+
+The control supports three approaches that can be used independently or combined:
+
+1. **Imperative** - Call `log()` directly from a controller
+2. **Reactive** - Connect an `EventProvider` via `connectSource()` for automatic event logging
+3. **Declarative** - Bind the `entries` aggregation to a model in XML views
+
+### 1. Imperative Logging
 
 ```xml
-<mvc:View
-    xmlns:control="org.mrb.ui5websockets.control"
-    xmlns="sap.m"
->
-    <control:EventLogTerminal id="eventLog" height="300px" autoScroll="true" />
-</mvc:View>
+<control:EventLogTerminal id="eventLog" height="300px" autoScroll="true" />
 ```
 
-## Logging from a Controller
-
-### Manual logging
-
-You can always call `log()` directly for full control over what appears in the terminal:
-
 ```js
-onInit: function () {
-    const terminal = this.byId("eventLog");
-    terminal.log("success", "Connection established.");
-    terminal.log("input", "Sent: Ping");
-    terminal.log("output", "Received: Pong!");
-    terminal.log("error", "Something went wrong.");
-    terminal.log("warning", "Connection lost, retrying...");
-    terminal.log("info", "Informational message.");
-    terminal.log("debug", "Debug-level detail.");
-    terminal.log("trace", "Trace-level detail.");
-    terminal.clear();
-}
+const terminal = this.byId("eventLog");
+terminal.log("success", "Connection established.");
+terminal.log("input", "Sent: Ping");
+terminal.log("output", "Received: Pong!");
+terminal.log("error", "Something went wrong.");
+terminal.log("warning", "Connection lost, retrying...");
+terminal.log("info", "Informational message.");
+terminal.log("debug", "Debug-level detail.");
+terminal.log("trace", "Trace-level detail.");
+terminal.clear();
 ```
 
-### Automatic logging via connectSource
+### 2. Reactive Logging via connectSource
 
-Connect any `sap.ui.base.EventProvider` to the terminal. Events are automatically logged and all listeners are cleaned up when the control is destroyed.
+Connect any `sap.ui.base.EventProvider` to the terminal. Events are automatically logged and all listeners are cleaned up when the control is destroyed. Calling `connectSource` twice on the same source disconnects the previous handlers first.
 
 ```js
-onInit: function () {
-    const terminal = this.byId("eventLog");
-    const wsService = this.getWebSocketService();
+const terminal = this.byId("eventLog");
+const wsService = this.getWebSocketService();
 
-    // Simple mapping: event name -> log type
-    terminal.connectSource(wsService, {
-        "open": "open",
-        "error": "error"
-    });
+terminal.connectSource(wsService, {
+    // Simple mapping: event name becomes the log message
+    "open": "success",
 
-    // Advanced mapping with custom messages and retry events.
-    // The WebSocketService forwards RetryStrategy lifecycle events
-    // (retryScheduled, retryMaxAttemptsReached, retryReset) through
-    // its own eventing, so everything can be connected to a single source.
-    terminal.connectSource(wsService, {
-        "open": { type: "success", message: "Connection opened." },
-        "error": { type: "error", message: "WebSocket error occurred." },
-        "close": {
-            type: "warning",
-            message: function (oEvent) {
-                const data = oEvent.getParameter("data");
-                const code = data ? data.getParameter("code") : "unknown";
-                return "Connection closed (code: " + code + ").";
-            }
-        },
-        "retryScheduled": {
-            type: "warning",
-            message: function (oEvent) {
-                return "Retry #" + oEvent.getParameter("attempt") + " in " + oEvent.getParameter("delay") + "ms...";
-            }
-        },
-        "retryMaxAttemptsReached": { type: "error", message: "Max retry attempts reached." },
-        "retryReset": { type: "success", message: "Retry strategy reset." }
-    });
-}
+    // Object mapping with static message
+    "error": { type: "error", message: "WebSocket error occurred." },
+
+    // Formatter function for dynamic messages from event parameters
+    "close": {
+        type: "warning",
+        message: function (oEvent) {
+            const data = oEvent.getParameter("data");
+            const code = data ? data.getParameter("code") : "unknown";
+            return "Connection closed (code: " + code + ").";
+        }
+    },
+    "retryScheduled": {
+        type: "warning",
+        message: function (oEvent) {
+            return "Retry #" + oEvent.getParameter("attempt") + " in " + oEvent.getParameter("delay") + "ms...";
+        }
+    },
+    "retryMaxAttemptsReached": { type: "error", message: "Max retry attempts reached." },
+    "retryReset": { type: "success", message: "Retry strategy reset." }
+});
 ```
 
 To disconnect a source manually (cleanup is automatic on destroy):
@@ -89,6 +77,33 @@ To disconnect a source manually (cleanup is automatic on destroy):
 terminal.disconnectSource(wsService);
 terminal.disconnectAllSources();
 ```
+
+### 3. Declarative Binding with Extended Change Detection
+
+The `entries` aggregation supports standard UI5 aggregation binding. When bound, the control uses Extended Change Detection (ECD) for efficient incremental DOM updates — only inserted or deleted entries touch the DOM, existing entries are left in place.
+
+```xml
+<control:EventLogTerminal id="eventLog" height="300px"
+    entries="{/logEntries}">
+    <control:EventLogEntry type="{type}" message="{message}" timestamp="{timestamp}" />
+</control:EventLogTerminal>
+```
+
+The model drives the terminal content:
+
+```js
+const oModel = new JSONModel({
+    logEntries: [
+        { type: "info", message: "Application started", timestamp: "10:30:00" },
+        { type: "success", message: "Connected", timestamp: "10:30:05" }
+    ]
+});
+this.getView().setModel(oModel);
+```
+
+When a binding is active, `log()` and `clear()` automatically operate on the bound model so that the model remains the single source of truth. `connectSource` also flows through the model in this case.
+
+Entries without a `timestamp` field in the model data get an auto-generated timestamp (HH:MM:SS) at display time. Entries without a `type` fall back to `"info"` styling.
 
 ## Properties
 
@@ -100,7 +115,13 @@ terminal.disconnectAllSources();
 | `backgroundColor` | `sap.ui.core.CSSColor` | `"#1e1e1e"` | Terminal background color |
 | `textColor` | `sap.ui.core.CSSColor` | `"#cccccc"` | Default text color |
 | `fontSize` | `sap.ui.core.CSSSize` | `"0.8125rem"` | Font size for log entries |
-| `fontFamily` | `string` | `"'Courier New', Consolas, monospace"` | Font family |
+| `fontFamily` | `string` | `"'Courier New', Consolas, monospace"` | Font family (supports CSS fallback chains) |
+
+## Aggregations
+
+| Aggregation | Type | Multiple | Bindable | Description |
+|---|---|---|---|---|
+| `entries` | `EventLogEntry` | Yes | Yes | Log entries displayed in the terminal |
 
 ## Log Types
 
@@ -117,13 +138,13 @@ Types are aligned with UI5 log levels (`sap.base.Log.Level`) plus additional sem
 | `input` | ▶ | Blue | - | Outgoing data (sent message, request) |
 | `output` | ◀ | Yellow | - | Incoming data (received message, response) |
 
-Unknown types fall back to `info` styling. Colors use UI5 theme CSS variables (e.g. `--sapPositiveTextColor`, `--sapNegativeTextColor`) with fallbacks for non-themed contexts.
+Unknown types fall back to `info` styling. Colors use UI5 theme CSS variables (for example `--sapPositiveTextColor`, `--sapNegativeTextColor`) with fallbacks for non-themed contexts.
 
 ### Custom Log Types
 
-You can register additional log types at the application level via `registerLogType`. Custom types take precedence over built-in types.
+Register additional log types at the application level via `registerLogType`. Custom types take precedence over built-in types. Registering after the control is rendered triggers a re-render automatically.
 
-Icons must be **Unicode characters** (e.g. `"\u21BB"`, `"\u2714"`, `"\u26A0"`). The terminal renders entries inside a monospace `<pre>` element, so `sap-icon://` URIs are not supported as they would require inline `sap.ui.core.Icon` controls that break the text-based layout. Unicode characters integrate naturally with monospace rendering.
+Icons must be **Unicode characters** (for example `"\u21BB"`, `"\u2714"`, `"\u26A0"`). The terminal renders entries inside a monospace `<pre>` element, so `sap-icon://` URIs are not supported as they would require inline `sap.ui.core.Icon` controls that break the text-based layout. Unicode characters integrate naturally with monospace rendering.
 
 The CSS class is applied to the message span and can reference the control's own classes, UI5 theme classes, or custom application-level classes.
 
@@ -139,12 +160,36 @@ terminal.log("connect", "Connection established.");
 
 Resolution order: custom type -> built-in type -> `info` fallback.
 
+## Testing
+
+Unit tests use the modern UI5 Test Starter (requires UI5 1.124+). Run with:
+
+```bash
+npm test
+```
+
+This starts the UI5 server and opens the test suite at `test/testsuite.qunit.html`. The suite covers property defaults, rendering, imperative logging, custom log types, reactive event sources, declarative binding with ECD, model-aware `log()`/`clear()`, and lifecycle behavior.
+
+Test files:
+
+```
+frontend/webapp/test/
+  testsuite.qunit.html          <- Test Starter entry point
+  Test.qunit.html               <- Generic test runner
+  testsuite.qunit.js            <- Suite config (QUnit 2, Sinon 4)
+  unit/control/
+    EventLogTerminal.qunit.js   <- ~50 tests, ~100 assertions
+```
+
 ## Technical Details
 
 - **Renderer**: apiVersion 4, separate file, RenderManager chaining
-- **Aggregation**: `entries` (`EventLogEntry[]`) for UI5 lifecycle management
-- **Performance**: Direct DOM append on `log()` calls (suppresses re-render), full re-render only when the control itself is invalidated
-- **Security**: All text escaped via `RenderManager.text()` (renderer path) and `createTextNode()` (direct DOM path)
-- **CSS**: Loaded once via `sap/ui/dom/includeStylesheet` on first instantiation
+- **Aggregation**: `entries` (`EventLogEntry[]`, bindable) for UI5 lifecycle management
+- **ECD**: Extended Change Detection enabled via `bUseExtendedChangeDetection`. Custom `updateEntries` hook consumes the binding's `.diff` array for incremental DOM updates, following the `sap.m.GrowingEnablement` pattern
+- **Performance**: Direct DOM manipulation on `log()` calls and ECD updates (suppresses re-render). Full re-render only when the control itself is invalidated
+- **Model-aware**: When a binding is active, `log()` pushes to the model and `clear()` empties the model array, keeping the model as single source of truth
+- **Security**: All text escaped via `RenderManager.text()` (renderer path) and `textContent` / `createTextNode()` (direct DOM path)
+- **CSS**: Loaded once via `sap/ui/dom/includeStylesheet` using module-relative `require.toUrl("./EventLogTerminal.css")`
+- **Memory**: WeakMap for source handler registry (does not prevent GC), WeakRef array for source iteration
 - **Resize**: Uses `sap/ui/core/ResizeHandler` to re-evaluate scroll on resize
 - **Timestamps**: Uses the Temporal API (`Temporal.Now.plainTimeISO()`) with a `Date`-based fallback for browsers without Temporal support
