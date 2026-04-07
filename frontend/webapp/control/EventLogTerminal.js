@@ -74,14 +74,14 @@ sap.ui.define(
                 properties: {
                     /**
                      * Width of the terminal.
-                     * Accepts any valid CSS width value (e.g. "100%", "500px").
+                     * Accepts any valid CSS width value (for example "100%", "500px").
                      * Defaults to 100% to fill the available container width.
                      */
                     width: { type: "sap.ui.core.CSSSize", defaultValue: "100%" },
 
                     /**
                      * Height of the terminal scroll area.
-                     * Accepts any valid CSS height value (e.g. "300px", "50vh").
+                     * Accepts any valid CSS height value (for example "300px", "50vh").
                      */
                     height: { type: "sap.ui.core.CSSSize", defaultValue: "300px" },
 
@@ -95,7 +95,7 @@ sap.ui.define(
 
                     /**
                      * Background color of the terminal.
-                     * Accepts any valid CSS color value (e.g. "#1e1e1e", "rgb(30,30,30)").
+                     * Accepts any valid CSS color value (for example "#1e1e1e", "rgb(30,30,30)").
                      */
                     backgroundColor: { type: "sap.ui.core.CSSColor", defaultValue: "#1e1e1e" },
 
@@ -107,7 +107,7 @@ sap.ui.define(
 
                     /**
                      * Font size for log entries.
-                     * Accepts any valid CSS size value (e.g. "0.8125rem", "13px").
+                     * Accepts any valid CSS size value (for example "0.8125rem", "13px").
                      */
                     fontSize: { type: "sap.ui.core.CSSSize", defaultValue: "0.8125rem" },
 
@@ -231,7 +231,7 @@ sap.ui.define(
              * warning, info, debug, trace, input, output). This allows consumers to
              * define domain-specific log types at the application level.
              *
-             * Icons should be Unicode characters (e.g. "\u25B6", "\u21BB", "\u2714").
+             * Icons should be Unicode characters (for example "\u25B6", "\u21BB", "\u2714").
              * The terminal renders log entries inside a monospace `<pre>` element,
              * which means `sap-icon://` URIs are not supported as they would require
              * inline `sap.ui.core.Icon` controls that break the monospace text layout.
@@ -608,7 +608,7 @@ sap.ui.define(
              * Create a DocumentFragment containing the DOM nodes for a single
              * log entry (timestamp span, separator, message span, line break).
              *
-             * If the entry has no timestamp (e.g. bound without a timestamp
+             * If the entry has no timestamp (for example bound without a timestamp
              * field), the current time is used as a display-only fallback.
              *
              * @param {org.mrb.ui5websockets.control.EventLogEntry} oEntry The entry element
