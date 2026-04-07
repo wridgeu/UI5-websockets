@@ -1,20 +1,8 @@
 /**
- * EventLogTerminalRenderer
- * @author Marco Beier
+ * EventLogTerminalRenderer module.
  *
  * Renderer for the EventLogTerminal custom control.
- * Uses apiVersion 4 for optimal rendering performance, which allows the
- * framework to skip re-rendering this control when a parent re-renders,
- * as long as the terminal's own state has not changed.
- *
- * The renderer produces semantic HTML: a root div, a scrollable div container,
- * and a pre element containing individual span elements for each log entry.
- * All text output uses the RenderManager's `text()` method for automatic
- * XSS-safe escaping.
- *
- * Log types are aligned with UI5 log levels (error, warning, info, debug, trace)
- * plus additional semantic types (success, input, output) for common use cases.
- * Unknown types fall back to "info" styling.
+ * Uses apiVersion 4 for optimal rendering performance.
  */
 sap.ui.define([], () => {
     "use strict";
@@ -52,7 +40,11 @@ sap.ui.define([], () => {
     });
 
     /**
-     * @memberof org.mrb.ui5websockets.control
+     * Renderer for the {@link org.mrb.ui5websockets.control.EventLogTerminal} control.
+     *
+     * @author Marco Beier
+     * @namespace org.mrb.ui5websockets.control.EventLogTerminalRenderer
+     * @public
      */
     const EventLogTerminalRenderer = {
         apiVersion: 4,

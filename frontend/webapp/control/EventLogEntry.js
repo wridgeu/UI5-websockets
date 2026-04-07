@@ -1,25 +1,32 @@
 /**
- * EventLogEntry
- * @author Marco Beier
+ * EventLogEntry module.
  *
- * Represents a single log entry inside the EventLogTerminal.
- * Each entry has a timestamp, a type (which determines its icon and color),
- * and a message. This is a lightweight UI5 Element (not a Control) because
- * it does not render itself independently. Instead, the parent
- * EventLogTerminal control renders all its entries.
- *
- * @see org.mrb.ui5websockets.control.EventLogTerminal
+ * Lightweight UI5 Element representing a single log entry.
+ * Does not render itself — the parent EventLogTerminal renders all its entries.
  */
 sap.ui.define(["sap/ui/core/Element"], (Element) => {
     "use strict";
 
     /**
+     * Constructor for a new EventLogEntry.
+     *
+     * @param {string} [sId] ID for the new element, generated automatically if no ID is given
+     * @param {object} [mSettings] Initial settings for the new element
+     *
      * @class
+     * Represents a single log entry inside the EventLogTerminal.
+     * Each entry has a timestamp, a type (which determines its icon and color),
+     * and a message.
+     *
      * @extends sap.ui.core.Element
-     * @alias org.mrb.ui5websockets.control.EventLogEntry
+     * @author Marco Beier
+     *
+     * @constructor
      * @public
+     * @alias org.mrb.ui5websockets.control.EventLogEntry
+     * @see org.mrb.ui5websockets.control.EventLogTerminal
      */
-    return Element.extend("org.mrb.ui5websockets.control.EventLogEntry", {
+    return Element.extend("org.mrb.ui5websockets.control.EventLogEntry", /** @lends org.mrb.ui5websockets.control.EventLogEntry.prototype */ {
         metadata: {
             properties: {
                 /**
