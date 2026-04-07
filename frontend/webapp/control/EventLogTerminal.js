@@ -57,8 +57,9 @@ sap.ui.define(
         "sap/ui/base/ManagedObjectMetadata",
         "./EventLogEntry",
         "./EventLogTerminalRenderer",
+        "require",
     ],
-    (Control, ResizeHandler, includeStylesheet, ManagedObjectMetadata, EventLogEntry, EventLogTerminalRenderer) => {
+    (Control, ResizeHandler, includeStylesheet, ManagedObjectMetadata, EventLogEntry, EventLogTerminalRenderer, require) => {
         "use strict";
 
         /** @type {boolean} Whether the control's CSS has already been loaded */
@@ -173,7 +174,7 @@ sap.ui.define(
              */
             init: function () {
                 if (!bCssLoaded) {
-                    const sCssUrl = sap.ui.require.toUrl("org/mrb/ui5websockets/control/EventLogTerminal.css");
+                    const sCssUrl = require.toUrl("./EventLogTerminal.css");
                     includeStylesheet(sCssUrl);
                     bCssLoaded = true;
                 }
