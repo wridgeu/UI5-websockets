@@ -286,6 +286,18 @@ sap.ui.define([
         assert.strictEqual(this.oTerminal.getEntries().length, 1, "no new entry after disconnect");
     });
 
+    QUnit.test("connectSource() called twice on same source disconnects old handlers first", function (assert) {
+        this.oTerminal.connectSource(this.oSource, { evt: "info" });
+        // Re-register with different mapping — old handler must be detached
+        this.oTerminal.connectSource(this.oSource, { evt: { type: "error", message: "V2" } });
+        this.oSource.fireEvent("evt");
+
+        assert.strictEqual(this.oTerminal.getEntries().length, 1,
+            "only one entry (old handler was detached, not leaked)");
+        assert.strictEqual(this.oTerminal.getEntries()[0].getType(), "error",
+            "uses the new mapping, not the old one");
+    });
+
     QUnit.test("disconnectAllSources() stops all sources", function (assert) {
         const oSource2 = new EventProvider();
         this.oTerminal.connectSource(this.oSource, { a: "info" });

@@ -80,7 +80,7 @@ sap.ui.define(
              *
              * @see sap.ui.base.ManagedObject#bUseExtendedChangeDetection
              * @type {boolean}
-             * @private
+             * @protected
              */
             bUseExtendedChangeDetection: true,
 
@@ -341,6 +341,12 @@ sap.ui.define(
              * @public
              */
             connectSource(oSource, mEventMapping) {
+                // Disconnect any previous registration for the same source
+                // to avoid leaking the old event handlers.
+                if (this._mSourceHandlers.has(oSource)) {
+                    this.disconnectSource(oSource);
+                }
+
                 const aHandlers = [];
                 const aEvents = Object.keys(mEventMapping);
                 aEvents.forEach((sEvent) => {
@@ -416,10 +422,10 @@ sap.ui.define(
              * new data (OData models). Delegates to the default framework
              * implementation which calls `getContexts` on the binding.
              *
-             * @param {string} sReason The reason for the refresh
-             * @private
+             * @param {string} _sReason The reason for the refresh (unused, required by framework contract)
+             * @protected
              */
-            refreshEntries(sReason) {
+            refreshEntries(_sReason) {
                 this.refreshAggregation("entries");
             },
 
@@ -437,10 +443,10 @@ sap.ui.define(
              *  - `[]`        → nothing changed
              *  - `[{index, type:"insert"|"delete"}, …]` → incremental update
              *
-             * @param {string} sReason The reason for the update
-             * @private
+             * @param {string} _sReason The reason for the update (unused, required by framework contract)
+             * @protected
              */
-            updateEntries(sReason) {
+            updateEntries(_sReason) {
                 const oBinding = this.getBinding("entries");
                 const oBindingInfo = this.getBindingInfo("entries");
                 if (!oBinding || !oBindingInfo) {
