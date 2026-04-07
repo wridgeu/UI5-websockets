@@ -62,6 +62,7 @@ sap.ui.define([], () => {
          *
          * @param {sap.ui.core.RenderManager} oRm The render manager
          * @param {org.mrb.ui5websockets.control.EventLogTerminal} oControl The control instance
+         * @public
          */
         render: function (oRm, oControl) {
             oRm.openStart("div", oControl).class("eventLogTerminal").style("width", oControl.getWidth()).openEnd();
@@ -97,6 +98,7 @@ sap.ui.define([], () => {
          * @param {sap.ui.core.RenderManager} oRm The render manager
          * @param {org.mrb.ui5websockets.control.EventLogEntry} oEntry The entry element
          * @param {{icon: string, cssClass: string}} [oConfig] Optional type config override (for custom types)
+         * @public
          */
         renderEntry: function (oRm, oEntry, oConfig) {
             const config = oConfig || LOG_TYPES[oEntry.getType()] || LOG_TYPES.info;
@@ -119,6 +121,7 @@ sap.ui.define([], () => {
          *
          * @param {string} sType The log entry type
          * @returns {{icon: string, cssClass: string}} The type configuration
+         * @public
          */
         getLogTypeConfig: function (sType) {
             return LOG_TYPES[sType] || LOG_TYPES.info;
