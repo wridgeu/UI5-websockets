@@ -267,6 +267,7 @@ sap.ui.define(
              */
             registerLogType(sType, oConfig) {
                 this._mCustomLogTypes[sType] = oConfig;
+                this.invalidate();
             },
 
             /**
@@ -506,7 +507,7 @@ sap.ui.define(
                         const oEntry = this.getEntries()[oDiff.index];
                         this._removeEntryFromDOM(oDiff.index);
                         this.removeAggregation("entries", oEntry, true);
-                        oEntry.destroy("KeepDom");
+                        oEntry.destroy(true);
                     }
                 }
 
