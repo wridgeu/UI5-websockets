@@ -5,7 +5,8 @@ sap.ui.define([
     "sap/ui/model/json/JSONModel",
     "sap/ui/base/EventProvider",
     "sap/ui/qunit/utils/createAndAppendDiv",
-], (EventLogTerminal, EventLogEntry, JSONModel, EventProvider, createAndAppendDiv) => {
+    "sap/ui/test/utils/nextUIUpdate",
+], (EventLogTerminal, EventLogEntry, JSONModel, EventProvider, createAndAppendDiv, nextUIUpdate) => {
     "use strict";
 
     createAndAppendDiv("uiArea");
@@ -13,10 +14,10 @@ sap.ui.define([
     // ── Helpers ──────────────────────────────────────────────────────────
 
     /** Create a terminal, place it, and wait for rendering. */
-    function createTerminal(oSettings) {
+    async function createTerminal(oSettings) {
         const oTerminal = new EventLogTerminal(oSettings);
         oTerminal.placeAt("uiArea");
-        sap.ui.getCore().applyChanges();
+        await nextUIUpdate();
         return oTerminal;
     }
 
@@ -34,8 +35,8 @@ sap.ui.define([
     // ── Module: Property Defaults ────────────────────────────────────────
 
     QUnit.module("Property Defaults", {
-        beforeEach: function () {
-            this.oTerminal = createTerminal();
+        beforeEach: async function () {
+            this.oTerminal = await createTerminal();
         },
         afterEach: function () {
             this.oTerminal.destroy();
@@ -84,8 +85,8 @@ sap.ui.define([
     // ── Module: Rendering ────────────────────────────────────────────────
 
     QUnit.module("Rendering", {
-        beforeEach: function () {
-            this.oTerminal = createTerminal();
+        beforeEach: async function () {
+            this.oTerminal = await createTerminal();
         },
         afterEach: function () {
             this.oTerminal.destroy();
@@ -104,8 +105,8 @@ sap.ui.define([
         assert.ok(dom.querySelector(".eventLogTerminal-pre"), "pre element exists");
     });
 
-    QUnit.test("applies width, height, colors, font to DOM", function (assert) {
-        const oTerminal = createTerminal({
+    QUnit.test("applies width, height, colors, font to DOM", async function (assert) {
+        const oTerminal = await createTerminal({
             width: "500px",
             height: "200px",
             backgroundColor: "#000",
@@ -128,8 +129,8 @@ sap.ui.define([
 
     QUnit.module("AutoScroll Behavior");
 
-    QUnit.test("scrollToBottom is called after log() when autoScroll is true", function (assert) {
-        const oTerminal = createTerminal({ autoScroll: true, height: "50px" });
+    QUnit.test("scrollToBottom is called after log() when autoScroll is true", async function (assert) {
+        const oTerminal = await createTerminal({ autoScroll: true, height: "50px" });
         const oScrollSpy = sinon.spy(oTerminal, "_scrollToBottom");
 
         oTerminal.log("info", "Test");
@@ -139,8 +140,8 @@ sap.ui.define([
         oTerminal.destroy();
     });
 
-    QUnit.test("scrollToBottom is NOT called after log() when autoScroll is false", function (assert) {
-        const oTerminal = createTerminal({ autoScroll: false, height: "50px" });
+    QUnit.test("scrollToBottom is NOT called after log() when autoScroll is false", async function (assert) {
+        const oTerminal = await createTerminal({ autoScroll: false, height: "50px" });
         const oScrollSpy = sinon.spy(oTerminal, "_scrollToBottom");
 
         oTerminal.log("info", "Test");
@@ -153,8 +154,8 @@ sap.ui.define([
     // ── Module: Imperative Logging (log / clear) ─────────────────────────
 
     QUnit.module("Imperative Logging", {
-        beforeEach: function () {
-            this.oTerminal = createTerminal();
+        beforeEach: async function () {
+            this.oTerminal = await createTerminal();
         },
         afterEach: function () {
             this.oTerminal.destroy();
@@ -212,8 +213,8 @@ sap.ui.define([
     // ── Module: Custom Log Types ─────────────────────────────────────────
 
     QUnit.module("Custom Log Types", {
-        beforeEach: function () {
-            this.oTerminal = createTerminal();
+        beforeEach: async function () {
+            this.oTerminal = await createTerminal();
         },
         afterEach: function () {
             this.oTerminal.destroy();
@@ -238,8 +239,8 @@ sap.ui.define([
     // ── Module: Reactive Event Source (connectSource) ────────────────────
 
     QUnit.module("Reactive Event Source", {
-        beforeEach: function () {
-            this.oTerminal = createTerminal();
+        beforeEach: async function () {
+            this.oTerminal = await createTerminal();
             this.oSource = new EventProvider();
         },
         afterEach: function () {
@@ -313,13 +314,13 @@ sap.ui.define([
     // ── Module: Declarative Binding (ECD) ────────────────────────────────
 
     QUnit.module("Declarative Binding with ECD", {
-        beforeEach: function () {
+        beforeEach: async function () {
             this.oModel = new JSONModel({
                 logEntries: [
                     { type: "info", message: "Initial entry", timestamp: "10:00:00" },
                 ],
             });
-            this.oTerminal = createTerminal();
+            this.oTerminal = await createTerminal();
             this.oTerminal.setModel(this.oModel);
             this.oTerminal.bindEntries({
                 path: "/logEntries",
@@ -331,7 +332,7 @@ sap.ui.define([
                 templateShareable: false,
             });
             // Force synchronous rendering after binding
-            sap.ui.getCore().applyChanges();
+            await nextUIUpdate();
         },
         afterEach: function () {
             this.oTerminal.destroy();
@@ -467,9 +468,9 @@ sap.ui.define([
     // ── Module: log() and clear() with Active Binding ────────────────────
 
     QUnit.module("Model-Aware log() and clear()", {
-        beforeEach: function () {
+        beforeEach: async function () {
             this.oModel = new JSONModel({ logEntries: [] });
-            this.oTerminal = createTerminal();
+            this.oTerminal = await createTerminal();
             this.oTerminal.setModel(this.oModel);
             this.oTerminal.bindEntries({
                 path: "/logEntries",
@@ -480,7 +481,7 @@ sap.ui.define([
                 }),
                 templateShareable: false,
             });
-            sap.ui.getCore().applyChanges();
+            await nextUIUpdate();
         },
         afterEach: function () {
             this.oTerminal.destroy();
@@ -516,14 +517,14 @@ sap.ui.define([
         assert.strictEqual(getPre(this.oTerminal).childNodes.length, 0, "DOM cleared");
     });
 
-    QUnit.test("after unbindEntries(), log() falls back to imperative path", function (assert) {
+    QUnit.test("after unbindEntries(), log() falls back to imperative path", async function (assert) {
         // Verify binding is active
         this.oTerminal.log("info", "While bound");
         assert.strictEqual(this.oModel.getProperty("/logEntries").length, 1, "entry in model");
 
         // Unbind
         this.oTerminal.unbindEntries();
-        sap.ui.getCore().applyChanges();
+        await nextUIUpdate();
 
         // log() should now use the imperative path (direct aggregation, not model)
         this.oTerminal.log("success", "After unbind");
@@ -538,9 +539,9 @@ sap.ui.define([
     // ── Module: connectSource() with Active Binding ──────────────────────
 
     QUnit.module("Reactive Source with Active Binding", {
-        beforeEach: function () {
+        beforeEach: async function () {
             this.oModel = new JSONModel({ logEntries: [] });
-            this.oTerminal = createTerminal();
+            this.oTerminal = await createTerminal();
             this.oTerminal.setModel(this.oModel);
             this.oTerminal.bindEntries({
                 path: "/logEntries",
@@ -551,7 +552,7 @@ sap.ui.define([
                 }),
                 templateShareable: false,
             });
-            sap.ui.getCore().applyChanges();
+            await nextUIUpdate();
             this.oSource = new EventProvider();
         },
         afterEach: function () {
@@ -576,8 +577,8 @@ sap.ui.define([
 
     QUnit.module("Lifecycle");
 
-    QUnit.test("destroy() disconnects all sources", function (assert) {
-        const oTerminal = createTerminal();
+    QUnit.test("destroy() disconnects all sources", async function (assert) {
+        const oTerminal = await createTerminal();
         const oSource = new EventProvider();
         const oDetachSpy = sinon.spy(oSource, "detachEvent");
 
@@ -601,12 +602,12 @@ sap.ui.define([
         oTerminal.destroy();
     });
 
-    QUnit.test("entries added before rendering appear after placeAt", function (assert) {
+    QUnit.test("entries added before rendering appear after placeAt", async function (assert) {
         const oTerminal = new EventLogTerminal();
         oTerminal.log("info", "Pre-render A");
         oTerminal.log("success", "Pre-render B");
         oTerminal.placeAt("uiArea");
-        sap.ui.getCore().applyChanges();
+        await nextUIUpdate();
 
         assert.strictEqual(domEntryCount(oTerminal), 2, "both entries rendered");
         oTerminal.destroy();
