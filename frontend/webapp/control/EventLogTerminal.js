@@ -1,17 +1,5 @@
 /**
- * EventLogTerminal
- * @author Marco Beier
- *
- * A custom UI5 control that renders an in-app terminal-like event log.
- * It displays timestamped, color-coded log entries in a dark-themed monospace panel,
- * similar to a browser developer console but embedded directly in the application.
- *
- * The control manages its own CSS (loaded from EventLogTerminal.css in the same directory)
- * and handles auto-scrolling to the latest entry. Log entries are stored as an aggregation
- * of EventLogEntry elements, making them part of the UI5 lifecycle.
- *
- * The renderer lives in a separate file (EventLogTerminalRenderer.js) and uses apiVersion 4
- * for optimal rendering performance.
+ * EventLogTerminal module.
  *
  * Built-in log types (aligned with sap.base.Log.Level):
  *   - "success" (green)  - positive outcome, successful operation
@@ -25,29 +13,6 @@
  *
  * Custom types can be registered via `registerLogType()`.
  * Unknown types fall back to "info" styling.
- *
- * Usage in XML Views:
- * ```xml
- * xmlns:control="org.mrb.ui5websockets.control"
- * ...
- * <control:EventLogTerminal id="eventLog" height="300px" autoScroll="true" />
- * ```
- *
- * Declarative binding (entries populated from a model):
- * ```xml
- * <control:EventLogTerminal entries="{/logEntries}">
- *     <control:EventLogEntry type="{type}" message="{message}" timestamp="{timestamp}" />
- * </control:EventLogTerminal>
- * ```
- *
- * Logging from a controller:
- * ```js
- * this.byId("eventLog").log("open", "Connection established.");
- * this.byId("eventLog").clear();
- * ```
- *
- * @see org.mrb.ui5websockets.control.EventLogEntry
- * @see org.mrb.ui5websockets.control.EventLogTerminalRenderer
  */
 sap.ui.define(
     [
@@ -65,7 +30,27 @@ sap.ui.define(
         /** @type {boolean} Whether the control's CSS has already been loaded */
         let bCssLoaded = false;
 
-        return Control.extend("org.mrb.ui5websockets.control.EventLogTerminal", {
+        /**
+         * Constructor for a new EventLogTerminal.
+         *
+         * @param {string} [sId] ID for the new control, generated automatically if no ID is given
+         * @param {object} [mSettings] Initial settings for the new control
+         *
+         * @class
+         * A terminal-style event log control that displays timestamped, color-coded
+         * log entries in a dark-themed monospace panel, similar to a browser developer
+         * console but embedded directly in the application.
+         *
+         * @extends sap.ui.core.Control
+         * @author Marco Beier
+         *
+         * @constructor
+         * @public
+         * @alias org.mrb.ui5websockets.control.EventLogTerminal
+         * @see org.mrb.ui5websockets.control.EventLogEntry
+         * @see org.mrb.ui5websockets.control.EventLogTerminalRenderer
+         */
+        return Control.extend("org.mrb.ui5websockets.control.EventLogTerminal", /** @lends org.mrb.ui5websockets.control.EventLogTerminal.prototype */ {
             /**
              * Enable Extended Change Detection for the `entries` aggregation.
              *
