@@ -11,7 +11,7 @@ sap.ui.define([], () => {
      * Icon and CSS class mapping for each log entry type.
      *
      * Types are intentionally generic and not tied to any specific domain.
-     * Domain-specific semantics (e.g. "connection opened") are expressed
+     * Domain-specific semantics (for example "connection opened") are expressed
      * through the message text and the type mapping in `connectSource`.
      *
      * Icons are Unicode characters rendered inline within the monospace `<pre>` element.
