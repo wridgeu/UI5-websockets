@@ -40,7 +40,7 @@ npm run start:frontend
 
 I recently worked a bit with WebSockets and had the fun to also use [APC/AMC](https://help.sap.com/docs/SAP_NETWEAVER_750/05d041d3df1a4595a3c45f57c15e2325/18ef61f6415743658407d4d17f06e950.html?version=7.5.9&locale=en-US) in addition to that.
 
-In my specific use-case we have some sort of pseudo-login which is reponsible for establishing a WebSocket connection. As only after the user is "logged in" we retrieve the URL to which our WebSocket needs to connect to. We also close a connection whenever the user performs a "logout"/leaves a certain page. I know logouts are tricky and I don't want to go too deep into that. The "logout" I'm speaking of here is a simple backwards navigation. 
+In my specific use-case we have some sort of pseudo-login which is responsible for establishing a WebSocket connection. As only after the user is "logged in" we retrieve the URL to which our WebSocket needs to connect to. We also close a connection whenever the user performs a "logout"/leaves a certain page. I know logouts are tricky and I don't want to go too deep into that. The "logout" I'm speaking of here is a simple backwards navigation. 
 >**Note**
 > In this scenario the application itself is embedded into the SAP Fiori Launchpad.
 
@@ -54,7 +54,7 @@ Of course one would need to also consider:
 
 Most of these scenarios are tricky to handle cleanly. *If you have some Best Practices though, go ahead and shoot me a message, I'm happy & eager to learn*. The [Beacon API](https://developer.mozilla.org/en-US/docs/Web/API/Beacon_API) can help with some of these cases.
 
-So what did I do? I created a "WebSocketService" that does exactly what I need it to do. Not as flexible, resiliant and overall good designed as I'd like it to be but well, there are deadlines to be kept. The Service I'm using in this repository is a bit different as it uses some sort of "EventFacade", or "Registry" if you will(?), to hide some of the `attachEvent` logic behind an object and forward these EventRegistrations to the actual Service to not bloat up the WebSocketService object itself too much.
+So what did I do? I created a "WebSocketService" that does exactly what I need it to do. Not as flexible, resilient and overall good designed as I'd like it to be but well, there are deadlines to be kept. The Service I'm using in this repository is a bit different as it uses some sort of "EventFacade", or "Registry" if you will(?), to hide some of the `attachEvent` logic behind an object and forward these EventRegistrations to the actual Service to not bloat up the WebSocketService object itself too much.
 
 Overall It was my first time not directly going for the [EventBus](https://ui5.sap.com/sdk/#/api/sap.ui.core.EventBus) so I was excited to learn new things and tried out extending the [EventProvider](https://ui5.sap.com/sdk/#/api/sap.ui.base.EventProvider). This gives us the possibility to work on a less "global" level and have a better overview of whats happening, compared to using a general & generic global eventing tunnel (like the EventBus). So ... in theory better maintainability, right?
 
@@ -144,7 +144,7 @@ getWebSocketService(){
 }
 ``` 
 
-In our case we didn't need multiple connections to different URLs however, the actual URL for the connection was only available at a certain point in time (after the pseudo-login). Which is why the Contstructor of the WebSocketService is not able to directly instantiate a WebSocket Instance. As the points in time for Service Instantiation and WebSocket instantiation differ.
+In our case we didn't need multiple connections to different URLs however, the actual URL for the connection was only available at a certain point in time (after the pseudo-login). Which is why the Constructor of the WebSocketService is not able to directly instantiate a WebSocket Instance. As the points in time for Service Instantiation and WebSocket instantiation differ.
 
 An alternative way would be, to throw this "WebSocketService" away completely and directly use the UI5 standard WebSocket within one of the controllers but then again I think I would need to make use of the EventBus or similar to handle the reconnection and all that "properly". 
 
@@ -160,7 +160,7 @@ Yes! For custom types in UI5 projects (with custom namespaces etc.), [`@typedef`
 
 ## NodeJS WebSocket Server for Testing
 
-I'm using a simple NodeJS WebSocket Package calles "[ws](https://github.com/websockets/ws)" to spin up a samll `WebSocketServer` for some testing.
+I'm using a simple NodeJS WebSocket Package called "[ws](https://github.com/websockets/ws)" to spin up a small `WebSocketServer` for some testing.
 
 ## Credits
 
