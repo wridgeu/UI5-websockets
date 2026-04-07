@@ -8,15 +8,17 @@
  * it does not render itself independently. Instead, the parent
  * EventLogTerminal control renders all its entries.
  *
- * @class
- * @extends sap.ui.core.Element
- * @alias org.mrb.ui5websockets.control.EventLogEntry
  * @see org.mrb.ui5websockets.control.EventLogTerminal
- * @public
  */
 sap.ui.define(["sap/ui/core/Element"], (Element) => {
     "use strict";
 
+    /**
+     * @class
+     * @extends sap.ui.core.Element
+     * @alias org.mrb.ui5websockets.control.EventLogEntry
+     * @public
+     */
     return Element.extend("org.mrb.ui5websockets.control.EventLogEntry", {
         metadata: {
             properties: {
