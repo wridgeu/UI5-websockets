@@ -33,6 +33,13 @@
  * <control:EventLogTerminal id="eventLog" height="300px" autoScroll="true" />
  * ```
  *
+ * Declarative binding (entries populated from a model):
+ * ```xml
+ * <control:EventLogTerminal entries="{/logEntries}">
+ *     <control:EventLogEntry type="{type}" message="{message}" timestamp="{timestamp}" />
+ * </control:EventLogTerminal>
+ * ```
+ *
  * Logging from a controller:
  * ```js
  * this.byId("eventLog").log("open", "Connection established.");
@@ -43,14 +50,40 @@
  * @see org.mrb.ui5websockets.control.EventLogTerminalRenderer
  */
 sap.ui.define(
-    ["sap/ui/core/Control", "sap/ui/core/ResizeHandler", "sap/ui/dom/includeStylesheet", "./EventLogEntry", "./EventLogTerminalRenderer"],
-    (Control, ResizeHandler, includeStylesheet, EventLogEntry, EventLogTerminalRenderer) => {
+    [
+        "sap/ui/core/Control",
+        "sap/ui/core/ResizeHandler",
+        "sap/ui/dom/includeStylesheet",
+        "sap/ui/base/ManagedObjectMetadata",
+        "./EventLogEntry",
+        "./EventLogTerminalRenderer",
+    ],
+    (Control, ResizeHandler, includeStylesheet, ManagedObjectMetadata, EventLogEntry, EventLogTerminalRenderer) => {
         "use strict";
 
         /** @type {boolean} Whether the control's CSS has already been loaded */
         let bCssLoaded = false;
 
         return Control.extend("org.mrb.ui5websockets.control.EventLogTerminal", {
+            /**
+             * Enable Extended Change Detection for the `entries` aggregation.
+             *
+             * When a list binding is created for `entries`, the framework calls
+             * `enableExtendedChangeDetection` on the binding (see
+             * `ManagedObjectBindingSupport._bindAggregation`). The binding then
+             * attaches a `.diff` array to the contexts returned by `getContexts`,
+             * and `updateEntries` consumes that diff for efficient incremental
+             * DOM updates instead of re-rendering all entries.
+             *
+             * This follows the same pattern as `sap.f.GridContainer` and
+             * `sap.m.GrowingEnablement` (which sets the flag on `sap.m.ListBase`).
+             *
+             * @see sap.ui.base.ManagedObject#bUseExtendedChangeDetection
+             * @type {boolean}
+             * @private
+             */
+            bUseExtendedChangeDetection: true,
+
             metadata: {
                 properties: {
                     /**
@@ -101,10 +134,30 @@ sap.ui.define(
                 aggregations: {
                     /**
                      * The log entries displayed in the terminal.
-                     * Managed internally via the `log()` method. Should not be bound or
-                     * modified directly from outside the control.
+                     *
+                     * Can be populated imperatively via the `log()` method, reactively
+                     * via `connectSource()`, or declaratively via aggregation binding.
+                     *
+                     * When bound, the control uses Extended Change Detection (ECD) to
+                     * efficiently apply diffs: only inserted or deleted entries touch
+                     * the DOM, existing entries are left untouched.
+                     *
+                     * Declarative binding example:
+                     * ```xml
+                     * <EventLogTerminal entries="{/logEntries}">
+                     *     <EventLogEntry type="{type}" message="{message}" timestamp="{timestamp}" />
+                     * </EventLogTerminal>
+                     * ```
+                     *
+                     * When a binding is active, `log()` and `clear()` operate on the
+                     * bound model so that the model remains the single source of truth.
                      */
-                    entries: { type: "org.mrb.ui5websockets.control.EventLogEntry", multiple: true, singularName: "entry" },
+                    entries: {
+                        type: "org.mrb.ui5websockets.control.EventLogEntry",
+                        multiple: true,
+                        singularName: "entry",
+                        bindable: "bindable",
+                    },
                 },
             },
 
@@ -356,6 +409,115 @@ sap.ui.define(
                 this._aSourceRefs = [];
             },
 
+            // -- Aggregation Binding (ECD) -------------------------------------------
+
+            /**
+             * Called by the framework when the `entries` binding needs to fetch
+             * new data (OData models). Delegates to the default framework
+             * implementation which calls `getContexts` on the binding.
+             *
+             * @param {string} sReason The reason for the refresh
+             * @private
+             */
+            refreshEntries(sReason) {
+                this.refreshAggregation("entries");
+            },
+
+            /**
+             * Called by the framework when the `entries` binding has new data.
+             *
+             * Uses Extended Change Detection: the binding's `getContexts()`
+             * returns an array with a `.diff` property describing inserts and
+             * deletes. Only those operations are applied to the DOM — unchanged
+             * entries are left in place, following the same pattern that
+             * `sap.m.GrowingEnablement` uses for `sap.m.ListBase`.
+             *
+             * Diff semantics (from the binding):
+             *  - `undefined` → new data, rebuild from scratch
+             *  - `[]`        → nothing changed
+             *  - `[{index, type:"insert"|"delete"}, …]` → incremental update
+             *
+             * @param {string} sReason The reason for the update
+             * @private
+             */
+            updateEntries(sReason) {
+                const oBinding = this.getBinding("entries");
+                const oBindingInfo = this.getBindingInfo("entries");
+                if (!oBinding || !oBindingInfo) {
+                    return;
+                }
+
+                const aContexts = oBinding.getContexts() || [];
+                const aDiff = aContexts.diff;
+                const aEntries = this.getEntries();
+
+                // No data — clear everything
+                if (!aContexts.length) {
+                    this.destroyAggregation("entries", true);
+                    const pre = this._getPreElement();
+                    if (pre) {
+                        pre.textContent = "";
+                    }
+                    return;
+                }
+
+                // No diff or no existing entries — rebuild from scratch
+                if (!aDiff || !aEntries.length) {
+                    this.destroyAggregation("entries", true);
+                    const pre = this._getPreElement();
+                    if (pre) {
+                        pre.textContent = "";
+                    }
+
+                    for (let i = 0; i < aContexts.length; i++) {
+                        const oEntry = oBindingInfo.factory(ManagedObjectMetadata.uid("clone"), aContexts[i]);
+                        oEntry.setBindingContext(aContexts[i], oBindingInfo.model);
+                        this.addAggregation("entries", oEntry, true);
+                        this._appendEntryToDOM(oEntry);
+                    }
+
+                    if (this.getAutoScroll()) {
+                        this._scrollToBottom();
+                    }
+                    return;
+                }
+
+                // Empty diff — nothing changed
+                if (!aDiff.length) {
+                    return;
+                }
+
+                // Process ECD diff — only insert/delete the affected entries
+                for (let i = 0; i < aDiff.length; i++) {
+                    const oDiff = aDiff[i];
+                    if (oDiff.type === "insert") {
+                        const oContext = aContexts[oDiff.index];
+                        const oEntry = oBindingInfo.factory(ManagedObjectMetadata.uid("clone"), oContext);
+                        oEntry.setBindingContext(oContext, oBindingInfo.model);
+                        this.insertAggregation("entries", oEntry, oDiff.index, true);
+                        this._insertEntryInDOM(oEntry, oDiff.index);
+                    } else if (oDiff.type === "delete") {
+                        const oEntry = this.getEntries()[oDiff.index];
+                        this._removeEntryFromDOM(oDiff.index);
+                        this.removeAggregation("entries", oEntry, true);
+                        oEntry.destroy("KeepDom");
+                    }
+                }
+
+                // Inserting/deleting entries shifts the index of all following
+                // items, so re-assign binding contexts to keep them in sync.
+                const aUpdated = this.getEntries();
+                for (let i = 0; i < aUpdated.length; i++) {
+                    aUpdated[i].setBindingContext(aContexts[i], oBindingInfo.model);
+                }
+
+                if (this.getAutoScroll()) {
+                    this._scrollToBottom();
+                }
+            },
+
+            // -- Resize Handling --------------------------------------------------
+
             /**
              * Handle resize events from the ResizeHandler.
              * Re-evaluates scroll position when the terminal is resized.
@@ -371,65 +533,69 @@ sap.ui.define(
             /**
              * Append a timestamped, color-coded entry to the terminal.
              *
-             * Creates an EventLogEntry element and adds it to the entries aggregation,
-             * then appends the rendered line directly to the DOM for performance
-             * (avoiding a full re-render on every log call).
+             * When a binding is active on the `entries` aggregation, the entry
+             * is pushed to the bound model and the binding's change detection
+             * handles the DOM update via `updateEntries`. When no binding is
+             * active, the entry is added directly to the aggregation and
+             * appended to the DOM for performance (no full re-render).
              *
              * @param {string} sType Built-in: success, error, warning, info, debug, trace, input, output. Custom types via registerLogType().
              * @param {string} sMessage The log message text
              * @public
              */
             log(sType, sMessage) {
-                const sTimestamp = this._formatTimestamp();
+                const oBinding = this.getBinding("entries");
+                if (oBinding) {
+                    // Binding active — push to model; the binding's change
+                    // detection will call updateEntries which handles the DOM.
+                    const oModel = oBinding.getModel();
+                    const sPath = oBinding.getPath();
+                    const aData = (oModel.getProperty(sPath) || []).slice();
+                    aData.push({ type: sType, message: sMessage, timestamp: this._formatTimestamp() });
+                    oModel.setProperty(sPath, aData);
+                    return;
+                }
 
-                // Add to aggregation for lifecycle management
+                // No binding — imperative path
                 const oEntry = new EventLogEntry({
                     type: sType,
                     message: sMessage,
-                    timestamp: sTimestamp,
+                    timestamp: this._formatTimestamp(),
                 });
-                // Suppress re-rendering; we append to the DOM directly for performance
                 this.addAggregation("entries", oEntry, true);
+                this._appendEntryToDOM(oEntry);
 
-                // Append directly to the pre element if already rendered
-                const pre = this._getPreElement();
-                if (pre) {
-                    const config = this._getLogTypeConfig(sType);
-
-                    const span = document.createElement("span");
-                    span.className = "eventLogTerminal-timestamp";
-                    span.textContent = sTimestamp;
-
-                    const msgSpan = document.createElement("span");
-                    msgSpan.className = config.cssClass;
-                    msgSpan.textContent = `${config.icon} ${sMessage}`;
-
-                    pre.appendChild(span);
-                    pre.appendChild(document.createTextNode(" "));
-                    pre.appendChild(msgSpan);
-                    pre.appendChild(document.createElement("br"));
-
-                    if (this.getAutoScroll()) {
-                        this._scrollToBottom();
-                    }
+                if (this.getAutoScroll()) {
+                    this._scrollToBottom();
                 }
             },
 
             /**
              * Clear all entries from the terminal.
              *
-             * Removes all EventLogEntry elements from the aggregation and
-             * clears the DOM content.
+             * When a binding is active, clears the bound model array so that
+             * the binding's change detection handles the DOM update.
+             * Otherwise removes all EventLogEntry elements directly.
              *
              * @public
              */
             clear() {
+                const oBinding = this.getBinding("entries");
+                if (oBinding) {
+                    const oModel = oBinding.getModel();
+                    const sPath = oBinding.getPath();
+                    oModel.setProperty(sPath, []);
+                    return;
+                }
+
                 this.destroyAggregation("entries", true);
                 const pre = this._getPreElement();
                 if (pre) {
                     pre.textContent = "";
                 }
             },
+
+            // -- DOM Helpers -------------------------------------------------------
 
             /**
              * Get the pre element inside this control's DOM.
@@ -443,6 +609,97 @@ sap.ui.define(
                     return null;
                 }
                 return domRef.querySelector(".eventLogTerminal-pre");
+            },
+
+            /**
+             * Create a DocumentFragment containing the DOM nodes for a single
+             * log entry (timestamp span, separator, message span, line break).
+             *
+             * If the entry has no timestamp (e.g. bound without a timestamp
+             * field), the current time is used as a display-only fallback.
+             *
+             * @param {org.mrb.ui5websockets.control.EventLogEntry} oEntry The entry element
+             * @returns {DocumentFragment} Ready-to-insert DOM fragment
+             * @private
+             */
+            _createEntryDOM(oEntry) {
+                const config = this._getLogTypeConfig(oEntry.getType());
+                const sTimestamp = oEntry.getTimestamp() || this._formatTimestamp();
+
+                const fragment = document.createDocumentFragment();
+
+                const oTimestampSpan = document.createElement("span");
+                oTimestampSpan.className = "eventLogTerminal-timestamp";
+                oTimestampSpan.textContent = sTimestamp;
+                fragment.appendChild(oTimestampSpan);
+
+                fragment.appendChild(document.createTextNode(" "));
+
+                const oMessageSpan = document.createElement("span");
+                oMessageSpan.className = config.cssClass;
+                oMessageSpan.textContent = `${config.icon} ${oEntry.getMessage()}`;
+                fragment.appendChild(oMessageSpan);
+
+                fragment.appendChild(document.createElement("br"));
+
+                return fragment;
+            },
+
+            /**
+             * Append a single entry's DOM nodes to the end of the pre element.
+             *
+             * @param {org.mrb.ui5websockets.control.EventLogEntry} oEntry The entry to append
+             * @private
+             */
+            _appendEntryToDOM(oEntry) {
+                const pre = this._getPreElement();
+                if (!pre) {
+                    return;
+                }
+                pre.appendChild(this._createEntryDOM(oEntry));
+            },
+
+            /**
+             * Insert a single entry's DOM nodes at a specific position.
+             *
+             * Each entry occupies four consecutive child nodes in the pre
+             * element (timestamp span, text node, message span, br), so the
+             * DOM offset for entry `i` is `i * 4`.
+             *
+             * @param {org.mrb.ui5websockets.control.EventLogEntry} oEntry The entry to insert
+             * @param {int} iIndex The zero-based entry index
+             * @private
+             */
+            _insertEntryInDOM(oEntry, iIndex) {
+                const pre = this._getPreElement();
+                if (!pre) {
+                    return;
+                }
+
+                const fragment = this._createEntryDOM(oEntry);
+                const iNodeIndex = iIndex * 4;
+                const oRefNode = pre.childNodes[iNodeIndex] || null;
+                pre.insertBefore(fragment, oRefNode);
+            },
+
+            /**
+             * Remove the four DOM nodes that belong to the entry at `iIndex`.
+             *
+             * @param {int} iIndex The zero-based entry index
+             * @private
+             */
+            _removeEntryFromDOM(iIndex) {
+                const pre = this._getPreElement();
+                if (!pre) {
+                    return;
+                }
+
+                const iNodeIndex = iIndex * 4;
+                for (let j = 0; j < 4; j++) {
+                    if (pre.childNodes[iNodeIndex]) {
+                        pre.removeChild(pre.childNodes[iNodeIndex]);
+                    }
+                }
             },
 
             /**
