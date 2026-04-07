@@ -1,4 +1,4 @@
-/*global QUnit */
+/*global QUnit, sinon */
 sap.ui.define([
     "org/mrb/ui5websockets/control/EventLogTerminal",
     "org/mrb/ui5websockets/control/EventLogEntry",
@@ -119,6 +119,34 @@ sap.ui.define([
         assert.strictEqual(scroll.style.backgroundColor, "rgb(0, 0, 0)");
         assert.strictEqual(scroll.style.color, "rgb(255, 255, 255)");
         assert.strictEqual(scroll.style.fontSize, "14px");
+        assert.ok(scroll.style.fontFamily.includes("Courier New"),
+            "fontFamily default includes Courier New");
+        oTerminal.destroy();
+    });
+
+    // ── Module: AutoScroll Behavior ────────────────────────────────────────
+
+    QUnit.module("AutoScroll Behavior");
+
+    QUnit.test("scrollToBottom is called after log() when autoScroll is true", function (assert) {
+        const oTerminal = createTerminal({ autoScroll: true, height: "50px" });
+        const oScrollSpy = sinon.spy(oTerminal, "_scrollToBottom");
+
+        oTerminal.log("info", "Test");
+
+        assert.ok(oScrollSpy.calledOnce, "_scrollToBottom called after log()");
+        oScrollSpy.restore();
+        oTerminal.destroy();
+    });
+
+    QUnit.test("scrollToBottom is NOT called after log() when autoScroll is false", function (assert) {
+        const oTerminal = createTerminal({ autoScroll: false, height: "50px" });
+        const oScrollSpy = sinon.spy(oTerminal, "_scrollToBottom");
+
+        oTerminal.log("info", "Test");
+
+        assert.strictEqual(oScrollSpy.callCount, 0, "_scrollToBottom not called");
+        oScrollSpy.restore();
         oTerminal.destroy();
     });
 
@@ -313,6 +341,10 @@ sap.ui.define([
         const pre = getPre(this.oTerminal);
         const iNodesBefore = pre.childNodes.length;
 
+        // Hold a reference to the first entry's timestamp span — if ECD
+        // does a full rebuild this DOM node will be destroyed and replaced.
+        const oFirstTimestampSpan = pre.childNodes[0];
+
         // Push a new entry to the model
         const aData = this.oModel.getProperty("/logEntries").slice();
         aData.push({ type: "success", message: "Appended", timestamp: "10:00:01" });
@@ -320,6 +352,8 @@ sap.ui.define([
 
         assert.strictEqual(this.oTerminal.getEntries().length, 2);
         assert.strictEqual(pre.childNodes.length, iNodesBefore + 4, "exactly 4 nodes added (1 entry)");
+        assert.strictEqual(pre.childNodes[0], oFirstTimestampSpan,
+            "original first entry DOM node is the same object (not rebuilt)");
     });
 
     QUnit.test("multiple rapid pushes each produce correct incremental DOM updates", function (assert) {
@@ -337,6 +371,26 @@ sap.ui.define([
         this.oModel.setProperty("/logEntries", []);
         assert.strictEqual(this.oTerminal.getEntries().length, 0);
         assert.strictEqual(getPre(this.oTerminal).childNodes.length, 0);
+    });
+
+    QUnit.test("removing an entry from model deletes correct DOM nodes", function (assert) {
+        // Add a second entry so we can remove the first
+        const aData = this.oModel.getProperty("/logEntries").slice();
+        aData.push({ type: "error", message: "Second entry", timestamp: "10:00:01" });
+        this.oModel.setProperty("/logEntries", aData);
+        assert.strictEqual(domEntryCount(this.oTerminal), 2, "starts with 2 entries");
+
+        // Hold reference to second entry's timestamp span (node index 4)
+        const pre = getPre(this.oTerminal);
+        const oSecondTimestamp = pre.childNodes[4];
+
+        // Remove the first entry from the model
+        this.oModel.setProperty("/logEntries", [aData[1]]);
+
+        assert.strictEqual(domEntryCount(this.oTerminal), 1, "1 entry remains");
+        // The surviving entry's timestamp span should now be at index 0
+        assert.strictEqual(pre.childNodes[0], oSecondTimestamp,
+            "second entry's DOM node moved to position 0 (first was deleted)");
     });
 
     QUnit.test("replacing model data rebuilds from scratch", function (assert) {
@@ -443,14 +497,17 @@ sap.ui.define([
     QUnit.test("destroy() disconnects all sources", function (assert) {
         const oTerminal = createTerminal();
         const oSource = new EventProvider();
+        const oDetachSpy = sinon.spy(oSource, "detachEvent");
+
         oTerminal.connectSource(oSource, { evt: "info" });
 
         oTerminal.destroy();
 
-        // Source should no longer have the terminal's handler attached
-        oSource.fireEvent("evt");
-        // No error thrown — handlers were cleaned up
-        assert.ok(true, "no error after firing event on disconnected source");
+        assert.ok(oDetachSpy.calledOnce, "detachEvent was called on the source");
+        assert.strictEqual(oDetachSpy.firstCall.args[0], "evt",
+            "detached the correct event name");
+
+        oDetachSpy.restore();
         oSource.destroy();
     });
 
