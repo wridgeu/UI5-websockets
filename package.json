@@ -13,7 +13,8 @@
         "lint": "eslint ./**/webapp/**/*.js && prettier --check ./**/webapp/**/*.{js,xml} --no-error-on-unmatched-pattern",
         "lint-fix": "eslint ./**/webapp/**/*.js --fix && prettier --write ./**/webapp/**/*.{js,xml} --no-error-on-unmatched-pattern",
         "serve:frontend": "ui5 serve --config=frontend/ui5.yaml",
-        "build:frontend": "ui5 build --config=frontend/ui5.yaml --clean-dest --dest frontend/dist --include-task=generateManifestBundle"
+        "build:frontend": "ui5 build --config=frontend/ui5.yaml --clean-dest --dest frontend/dist --include-task=generateManifestBundle",
+        "test": "ui5 serve --config=frontend/ui5.yaml --open test/testsuite.qunit.html"
     },
     "devDependencies": {
         "@eslint/js": "^9.39.4",
