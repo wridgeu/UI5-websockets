@@ -328,6 +328,7 @@ sap.ui.define([
                     message: "{message}",
                     timestamp: "{timestamp}",
                 }),
+                templateShareable: false,
             });
             // Force synchronous rendering after binding
             sap.ui.getCore().applyChanges();
@@ -431,6 +432,7 @@ sap.ui.define([
                     message: "{message}",
                     timestamp: "{timestamp}",
                 }),
+                templateShareable: false,
             });
             sap.ui.getCore().applyChanges();
         },
@@ -480,6 +482,7 @@ sap.ui.define([
                     message: "{message}",
                     timestamp: "{timestamp}",
                 }),
+                templateShareable: false,
             });
             sap.ui.getCore().applyChanges();
             this.oSource = new EventProvider();
