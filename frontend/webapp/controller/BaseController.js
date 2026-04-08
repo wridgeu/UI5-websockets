@@ -4,7 +4,7 @@ sap.ui.define(
      * @param {typeof sap.ui.core.mvc.Controller} Controller
      * @param {typeof sap.ui.core.routing.History} History
      * @param {typeof sap.ui.core.UIComponent} UIComponent
-     * @param {typeof org.mrb.ui5websockets.model.formatter} UIComponent
+     * @param {typeof org.mrb.ui5websockets.model.formatter} formatter
      */
     (Controller, History, UIComponent, formatter) => {
         "use strict";

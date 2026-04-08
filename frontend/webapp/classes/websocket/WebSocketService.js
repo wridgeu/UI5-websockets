@@ -244,7 +244,14 @@ sap.ui.define(
                  */
                 _onMessage(event) {
                     // workaround as "out in the open, there is no PCP Protocol ;)"
-                    const payload = JSON.parse(event.getParameter("data"));
+                    let payload;
+                    try {
+                        payload = JSON.parse(event.getParameter("data"));
+                    } catch (error) {
+                        this._logger.error("Failed to parse message data!", `Event: "Message", Error: ${error.message}`);
+                        return;
+                    }
+
                     const messageContext = payload.pcpFields; //event.getParameter("pcpFields");
 
                     if (!messageContext?.action) {
