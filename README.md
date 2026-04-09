@@ -150,6 +150,8 @@ An alternative way would be, to throw this "WebSocketService" away completely an
 
 I've seen other applications not taking care of any of these things and simply creating a connection without ever closing them or caring if a reconnection is required. So you could definitely get away with simply opening up the connection, forwarding the events somehow (EventBus) or directly handling them in the current Controller and then never care about anything else that comes after.
 
+On the consumer side, if you need to present multiple incoming messages to the user as sequential dialogs without them overlapping, check out [ui5-msg-box-sequencer](https://github.com/wridgeu/ui5-msg-box-sequencer).
+
 ### Is the "Facade" necessary?
 
 Not at all. Any Controller/Object can just take the "WebSocketService"-Instance and call `attachEventXYZ` or `detachEventXYZ` on it.
