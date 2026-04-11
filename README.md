@@ -7,8 +7,11 @@ A demo repository showcasing WebSocket and SAP PCP (Push Channel Protocol) integ
 *Demo overview*
 ![Demo overview showing the event log terminal with connection, messaging, and retry events](./readme/Example%20Overview%201.png)
 
+*Connection initialization*
+![Connection initialization showing the backend handshake on first connect](./readme/Example%20Overview%202.png)
+
 *Reconnection with greeting*
-![Reconnection scenario showing the backend greeting after a successful retry](./readme/Example%20Overview%202.png)
+![Reconnection scenario showing the backend greeting after a successful retry](./readme/Example%20Overview%203.png)
 
 ## Usage
 
