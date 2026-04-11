@@ -60,9 +60,9 @@ sap.ui.define(
                     this._logToTerminal("warning", "Connection already active. Close it first before re-initializing.");
                     return;
                 }
-                this._logToTerminal("info", "Connecting to ws://localhost:8081/ ...");
+                this._logToTerminal("info", "Connecting to ws://localhost:8081/ (PCP v10) ...");
                 // could be some sort of "login"-view
-                this.wsService.setupConnection("//localhost:8081/", false);
+                this.wsService.setupConnection("//localhost:8081/", true);
             },
 
             /**
