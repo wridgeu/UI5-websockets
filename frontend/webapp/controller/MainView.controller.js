@@ -1,11 +1,10 @@
 sap.ui.define(
-    ["./BaseController", "sap/m/MessageBox", "sap/m/MessageToast"],
+    ["./BaseController", "sap/m/MessageToast"],
     /**
      * @param {typeof sap.ui.core.mvc.Controller} BaseController
-     * @param {typeof sap.m.MessageBox} MessageBox
      * @param {typeof sap.m.MessageToast} MessageToast
      */
-    (BaseController, MessageBox, MessageToast) => {
+    (BaseController, MessageToast) => {
         "use strict";
 
         return BaseController.extend("org.mrb.ui5websockets.controller.MainView", {
@@ -42,27 +41,51 @@ sap.ui.define(
                     retryReset: { type: "success", message: "Retry strategy reset (connection recovered)." },
                 });
 
-                // Facade events still need manual handlers for UI feedback (MessageBox, Toast)
+                // Facade events still need manual handlers for UI feedback (Toasts).
+                // Both PCP and plain WebSocket modes flow through the same
+                // action-based events, because the service knows how to read
+                // both native PCP headers and the plain-mode JSON envelope.
                 const facade = this.wsService.getEventingFacade();
                 facade.attachSomeEvent(this._onSomeEvent, this);
                 facade.attachPingPong(this._onPingPong, this);
 
-                terminal.log("info", "Application initialized. Click 'Initialize a WS Connection' to start.");
+                terminal.log("info", "Application initialized. Click 'Init (PCP)' or 'Init (plain WS)' to start.");
             },
 
             // -- Button Handlers --
 
             /**
-             * Establish a connection to the locally running WS (NodeJS) Server
+             * Establish a connection using `SapPcpWebSocket` and the
+             * `v10.pcp.sap.com` subprotocol. The backend will reply with
+             * proper PCP frames and the service dispatches on the
+             * `action` header field.
              */
-            setup() {
+            setupPcp() {
+                this._setup(true);
+            },
+
+            /**
+             * Establish a connection using a regular `WebSocket` with no
+             * subprotocol. The backend replies with plain text frames and
+             * the service fires generic `message` events.
+             */
+            setupPlain() {
+                this._setup(false);
+            },
+
+            /**
+             * @param {boolean} usePcp Whether to use PCP or plain WebSocket
+             * @private
+             */
+            _setup(usePcp) {
                 if (this.wsService.isConnected()) {
                     this._logToTerminal("warning", "Connection already active. Close it first before re-initializing.");
                     return;
                 }
-                this._logToTerminal("info", "Connecting to ws://localhost:8081/ (PCP v10) ...");
+                const label = usePcp ? "PCP v10" : "plain WS";
+                this._logToTerminal("info", `Connecting to ws://localhost:8081/ (${label}) ...`);
                 // could be some sort of "login"-view
-                this.wsService.setupConnection("//localhost:8081/", true);
+                this.wsService.setupConnection("//localhost:8081/", usePcp);
             },
 
             /**
@@ -140,7 +163,7 @@ sap.ui.define(
             _onSomeEvent(event) {
                 const data = event.getParameter("data");
                 this._logToTerminal("output", `some-action: "${data}"`);
-                MessageBox.show(data);
+                MessageToast.show(data);
             },
 
             /**
