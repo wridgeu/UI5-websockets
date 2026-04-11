@@ -199,7 +199,7 @@ sap.ui.define([
 
     QUnit.test("all 8 built-in types render without error", function (assert) {
         const aTypes = ["success", "error", "warning", "info", "debug", "trace", "input", "output"];
-        aTypes.forEach((sType) => this.oTerminal.log(sType, sType + " message"));
+        aTypes.forEach((sType) => this.oTerminal.log(sType, `${sType} message`));
         assert.strictEqual(this.oTerminal.getEntries().length, 8);
         assert.strictEqual(domEntryCount(this.oTerminal), 8);
     });
@@ -270,7 +270,7 @@ sap.ui.define([
         this.oTerminal.connectSource(this.oSource, {
             close: {
                 type: "warning",
-                message: (oEvent) => "Code: " + oEvent.getParameter("code"),
+                message: (oEvent) => `Code: ${oEvent.getParameter("code")}`,
             },
         });
         this.oSource.fireEvent("close", { code: 1001 });
@@ -373,7 +373,7 @@ sap.ui.define([
     QUnit.test("multiple rapid pushes each produce correct incremental DOM updates", function (assert) {
         for (let i = 0; i < 5; i++) {
             const aData = this.oModel.getProperty("/logEntries").slice();
-            aData.push({ type: "info", message: "Entry " + i, timestamp: "10:00:0" + i });
+            aData.push({ type: "info", message: `Entry ${i}`, timestamp: `10:00:0${i}` });
             this.oModel.setProperty("/logEntries", aData);
         }
         // 1 initial + 5 pushed = 6
@@ -417,7 +417,7 @@ sap.ui.define([
         const sTimestamp = pre.childNodes[4].textContent;
         assert.ok(sTimestamp, "timestamp is not empty");
         assert.ok(/^\d{2}:\d{2}:\d{2}$/.test(sTimestamp),
-            "auto-generated timestamp matches HH:MM:SS format: " + sTimestamp);
+            `auto-generated timestamp matches HH:MM:SS format: ${sTimestamp}`);
     });
 
     QUnit.test("model entry with empty string timestamp gets auto-generated timestamp in DOM", function (assert) {
@@ -429,7 +429,7 @@ sap.ui.define([
         const sTimestamp = pre.childNodes[4].textContent;
         assert.ok(sTimestamp, "timestamp is not empty despite empty string in model");
         assert.ok(/^\d{2}:\d{2}:\d{2}$/.test(sTimestamp),
-            "auto-generated timestamp matches HH:MM:SS format: " + sTimestamp);
+            `auto-generated timestamp matches HH:MM:SS format: ${sTimestamp}`);
     });
 
     QUnit.test("model entry without type falls back to info styling", function (assert) {
@@ -497,7 +497,7 @@ sap.ui.define([
         assert.strictEqual(aData[0].message, "Via log()");
         assert.ok(aData[0].timestamp, "timestamp is auto-generated");
         assert.ok(/^\d{2}:\d{2}:\d{2}$/.test(aData[0].timestamp),
-            "timestamp matches HH:MM:SS format: " + aData[0].timestamp);
+            `timestamp matches HH:MM:SS format: ${aData[0].timestamp}`);
     });
 
     QUnit.test("log() entry appears in DOM via ECD path", function (assert) {

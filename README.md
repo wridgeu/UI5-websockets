@@ -156,6 +156,16 @@ On the consumer side, if you need to present multiple incoming messages to the u
 
 Not at all. Any Controller/Object can just take the "WebSocketService"-Instance and call `attachEventXYZ` or `detachEventXYZ` on it.
 
+The facade is a convenience layer, nothing more. The WebSocketService itself is deliberately ignorant of which actions exist: it fires whatever action string arrives from the backend as a generic event, so consumers can always bypass the facade and attach directly:
+
+```js
+const oWs = this.getWebSocketService();
+oWs.attachEvent(WebSocketMessageAction.SOME_ACTION, this.onSomeAction, this);
+oWs.detachEvent(WebSocketMessageAction.SOME_ACTION, this.onSomeAction, this);
+```
+
+There is a trade-off to be aware of: the facade wraps one method pair per action, so as the ENUM grows, the facade grows with it. In this demo there are only two actions (`SOME_ACTION`, `PING_PONG`), so the facade is cheap. In a real application with dozens of actions, maintaining wrapper methods becomes tedious and the direct `attachEvent(ENUM.action, ...)` form scales better without any code changes in the service. Pick whichever side of that trade-off fits your codebase, both paths are fully supported.
+
 ### Are you using valid JSDoc?
 
 Yes! For custom types in UI5 projects (with custom namespaces etc.), [`@typedef`](https://jsdoc.app/tags-typedef.html) is the way to go. You either define the type in the file where it's used, or define it in one central file and import it in others via `@import` (or the older `@typedef {import("./path").MyType} MyType` pattern). This is the standard approach, there's no hidden "better way".

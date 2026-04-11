@@ -43,7 +43,7 @@ export default [
             "no-prototype-builtins": "error",
             "no-shadow": "error",
             "no-undef": "error",
-            "no-unused-vars": "error",
+            "no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
             "no-var": "error",
             "no-warning-comments": "warn",
             "prefer-const": "error",
