@@ -67,17 +67,33 @@ const FIELD_REGEX = /((?:[^:\\]|(?:\\.))+):((?:[^:\\\n]|(?:\\.))*)/;
  * the caller passes them inside `fields` (any `pcp-*` entry in `fields` is
  * ignored — they are reserved per spec).
  *
+ * Field values are coerced to strings via `String(value)` (matching openui5),
+ * so numeric or boolean values become their string representation on the wire
+ * and the original type is not recovered on decode.
+ *
+ * Note: we escape `action` and `bodyType` here even though openui5's
+ * serializer writes them raw. The standard values (`MESSAGE`, `text`,
+ * `binary`) contain no special characters, so the wire output is identical;
+ * the extra escape only matters if a caller passes a tainted value.
+ *
  * @param {object} [options]
  * @param {string} [options.action="MESSAGE"]    Value for `pcp-action`.
  * @param {string} [options.bodyType="text"]     Value for `pcp-body-type` (`text` or `binary`).
- * @param {Record<string,string>} [options.fields] Additional, application-defined fields.
+ * @param {Record<string,string>} [options.fields] Additional, application-defined fields. Names must be non-empty and must not start with `pcp-`.
  * @param {string} [options.body=""]             Message body. For binary content, pre-encode to Base64 and pass `bodyType: "binary"`.
  * @returns {string}
+ * @throws {Error} If a field name is the empty string.
  */
 function encode({ action = DEFAULT_ACTION, bodyType = DEFAULT_BODY_TYPE, fields = {}, body = '' } = {}) {
   let header = `${PCP_ACTION}:${escape(action)}\n${PCP_BODY_TYPE}:${escape(bodyType)}\n`;
   for (const [name, value] of Object.entries(fields)) {
     if (name.startsWith('pcp-')) continue;
+    if (name === '') {
+      // Empty names cannot be parsed back: SapPcpWebSocket's regex requires
+      // at least one character before the colon, so this would silently lose
+      // data on the wire. Fail loudly instead.
+      throw new Error('PCP field names must be non-empty');
+    }
     header += `${escape(name)}:${escape(value)}\n`;
   }
   return header + '\n' + body;

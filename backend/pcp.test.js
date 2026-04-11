@@ -42,6 +42,19 @@ describe('pcp.encode', () => {
       'pcp-action:MESSAGE\npcp-body-type:text\nweird\\:name:v\\nwith\\\\colon\\:and-lf\n\nb',
     );
   });
+
+  it('throws on empty field names rather than emitting an unparseable line', () => {
+    assert.throws(
+      () => encode({ fields: { '': 'v' }, body: 'b' }),
+      /PCP field names must be non-empty/,
+    );
+  });
+
+  it('does not let a fields entry override pcp-body-type', () => {
+    const wire = encode({ fields: { 'pcp-body-type': 'binary' }, body: 'x' });
+    // pcp-body-type stays at the default `text` and the override is dropped
+    assert.equal(wire, 'pcp-action:MESSAGE\npcp-body-type:text\n\nx');
+  });
 });
 
 describe('pcp.decode', () => {
@@ -76,6 +89,38 @@ describe('pcp.decode', () => {
     );
     assert.equal(pcpFields['weird:name'], 'v\nwith\\colon:and-lf');
   });
+
+  it('returns the body verbatim even when it contains an LFLF', () => {
+    const { pcpFields, body } = decode(
+      'pcp-action:MESSAGE\npcp-body-type:text\nfoo:bar\n\nfirst paragraph\n\nsecond paragraph',
+    );
+    assert.equal(pcpFields.foo, 'bar');
+    assert.equal(body, 'first paragraph\n\nsecond paragraph');
+  });
+
+  it('skips header lines that have no colon', () => {
+    const { pcpFields, body } = decode(
+      'pcp-action:MESSAGE\npcp-body-type:text\nrubbish\nfoo:bar\n\nbody',
+    );
+    assert.deepEqual(pcpFields, {
+      'pcp-action': 'MESSAGE',
+      'pcp-body-type': 'text',
+      foo: 'bar',
+    });
+    assert.equal(body, 'body');
+  });
+
+  it('handles a completely empty input', () => {
+    const { pcpFields, body } = decode('');
+    assert.deepEqual(pcpFields, {});
+    assert.equal(body, '');
+  });
+
+  it('handles an LFLF at position 0 (empty headers, body present)', () => {
+    const { pcpFields, body } = decode('\n\nbody');
+    assert.deepEqual(pcpFields, {});
+    assert.equal(body, 'body');
+  });
 });
 
 describe('pcp round-trip', () => {
@@ -96,8 +141,18 @@ describe('pcp round-trip', () => {
       }
       assert.equal(pcpFields['pcp-action'], 'MESSAGE');
       assert.equal(pcpFields['pcp-body-type'], 'text');
+      // Exactly the custom fields plus pcp-action and pcp-body-type;
+      // anything else is accidental pollution.
+      assert.equal(Object.keys(pcpFields).length, Object.keys(c.fields).length + 2);
     });
   }
+
+  it('round-trips a 50KB body', () => {
+    const body = 'x'.repeat(50 * 1024);
+    const decoded = decode(encode({ fields: { size: '50k' }, body }));
+    assert.equal(decoded.body, body);
+    assert.equal(decoded.pcpFields.size, '50k');
+  });
 });
 
 describe('pcp helpers', () => {

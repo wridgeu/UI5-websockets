@@ -12,7 +12,14 @@
                 <VBox alignItems="Center" class="sapUiSmallMarginEnd">
                     <Title text="Connection" level="H5" class="sapUiSmallMarginBottom" />
                     <HBox>
-                        <Button text="Initialize" press=".setup" type="Emphasized" icon="sap-icon://connected" />
+                        <Button text="Init (PCP)" press=".setupPcp" icon="sap-icon://connected" tooltip="Connect via SapPcpWebSocket using subprotocol v10.pcp.sap.com" />
+                        <Button
+                            class="sapUiSmallMarginBegin"
+                            text="Init (plain WS)"
+                            press=".setupPlain"
+                            icon="sap-icon://connected"
+                            tooltip="Connect via a regular WebSocket without any subprotocol"
+                        />
                         <Button class="sapUiSmallMarginBeginEnd" text="Send Ping" press=".sendPing" icon="sap-icon://outgoing-call" />
                         <Button text="Close" press=".closeConnection" icon="sap-icon://disconnected" />
                     </HBox>

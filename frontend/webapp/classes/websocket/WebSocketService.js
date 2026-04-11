@@ -240,24 +240,51 @@ sap.ui.define(
                 /**
                  * Internal handler for message-event.
                  *
-                 * When the service is set up with PCP enabled, the underlying
-                 * `SapPcpWebSocket` already split the frame into `pcpFields`
-                 * (a flat key/value map of all PCP header fields) and `data`
-                 * (the plain body). We dispatch on the application-defined
-                 * `action` field carried in the headers.
+                 * The service supports two ways of conveying per-message
+                 * context, and reads them in this order:
+                 *
+                 * 1. **Native PCP** — when the underlying socket is a
+                 *    `SapPcpWebSocket`, the message event already carries a
+                 *    `pcpFields` parameter (a flat key/value map of all PCP
+                 *    header fields, including `pcp-action` / `pcp-body-type`).
+                 *    We dispatch on its `action` entry directly.
+                 * 2. **JSON envelope fallback** — when the underlying socket
+                 *    is a regular `WebSocket`, the server can imitate PCP
+                 *    context by sending a JSON body of the form
+                 *    `{ "pcpFields": { "action": "..." }, "data": "..." }`.
+                 *    The service unwraps the envelope and dispatches the
+                 *    same way.
+                 *
+                 * If neither shape produces a recognized action, the raw
+                 * `data` is forwarded as a generic `message` event so
+                 * consumers can still react to it.
                  *
                  * @private
                  */
                 _onMessage(event) {
-                    const pcpFields = event.getParameter("pcpFields") || {};
-                    const data = event.getParameter("data");
+                    let data = event.getParameter("data");
+                    let pcpFields = event.getParameter("pcpFields");
 
-                    if (!pcpFields.action) {
-                        this._logger.warning("Message arrived without context!", `Event: "Message", Missing: 'action'`);
-                        return;
+                    // Plain WebSocket fallback: if there is no native pcpFields
+                    // parameter (because we are not on a SapPcpWebSocket), try
+                    // unwrapping a JSON envelope from the body. Non-JSON bodies
+                    // pass through unchanged and fall into the default branch
+                    // below as generic messages.
+                    if (!pcpFields && typeof data === "string" && data.length > 0 && data.charAt(0) === "{") {
+                        try {
+                            const envelope = JSON.parse(data);
+                            if (envelope && typeof envelope === "object" && envelope.pcpFields) {
+                                pcpFields = envelope.pcpFields;
+                                data = envelope.data;
+                            }
+                        } catch (error) {
+                            this._logger.debug("Message body looked like JSON but failed to parse, treating as raw text.", `Event: "Message", Error: ${error.message}`);
+                        }
                     }
 
-                    switch (pcpFields.action) {
+                    const action = (pcpFields && pcpFields.action) || undefined;
+
+                    switch (action) {
                         case MessageAction.SOME_ACTION:
                             this.fireEvent(MessageAction.SOME_ACTION, { data });
                             break;
@@ -266,7 +293,9 @@ sap.ui.define(
                             break;
                         default:
                             this.fireEvent("message", { data });
-                            this._logger.warning("No action handler defined!", `Event: "Message"`);
+                            if (action) {
+                                this._logger.warning(`No handler defined for action "${action}"`, `Event: "Message"`);
+                            }
                     }
 
                     this._logger.info("Message arrived!", `Event: "Message"`);
