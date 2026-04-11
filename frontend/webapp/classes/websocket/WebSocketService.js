@@ -240,40 +240,32 @@ sap.ui.define(
                 /**
                  * Internal handler for message-event.
                  *
+                 * When the service is set up with PCP enabled, the underlying
+                 * `SapPcpWebSocket` already split the frame into `pcpFields`
+                 * (a flat key/value map of all PCP header fields) and `data`
+                 * (the plain body). We dispatch on the application-defined
+                 * `action` field carried in the headers.
+                 *
                  * @private
                  */
                 _onMessage(event) {
-                    // workaround as "out in the open, there is no PCP Protocol ;)"
-                    let payload;
-                    try {
-                        payload = JSON.parse(event.getParameter("data"));
-                    } catch (error) {
-                        this._logger.error("Failed to parse message data!", `Event: "Message", Error: ${error.message}`);
-                        return;
-                    }
+                    const pcpFields = event.getParameter("pcpFields") || {};
+                    const data = event.getParameter("data");
 
-                    const messageContext = payload.pcpFields; //event.getParameter("pcpFields");
-
-                    if (!messageContext?.action) {
+                    if (!pcpFields.action) {
                         this._logger.warning("Message arrived without context!", `Event: "Message", Missing: 'action'`);
                         return;
                     }
 
-                    switch (messageContext.action) {
+                    switch (pcpFields.action) {
                         case MessageAction.SOME_ACTION:
-                            this.fireEvent(MessageAction.SOME_ACTION, {
-                                data: payload.data, //JSON.parse(event.getParameter("data")),
-                            });
+                            this.fireEvent(MessageAction.SOME_ACTION, { data });
                             break;
                         case MessageAction.PING_PONG:
-                            this.fireEvent(MessageAction.PING_PONG, {
-                                data: payload.data, //JSON.parse(event.getParameter("data")),
-                            });
+                            this.fireEvent(MessageAction.PING_PONG, { data });
                             break;
                         default:
-                            this.fireEvent("message", {
-                                data: payload.data, //JSON.parse(event.getParameter("data")),
-                            });
+                            this.fireEvent("message", { data });
                             this._logger.warning("No action handler defined!", `Event: "Message"`);
                     }
 
