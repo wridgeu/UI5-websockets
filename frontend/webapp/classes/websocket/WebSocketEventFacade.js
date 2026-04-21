@@ -8,7 +8,7 @@ sap.ui.define(["sap/ui/base/Object", "org/mrb/ui5websockets/classes/websocket/ty
              * @override
              */
             constructor: function (websocketService) {
-                Object.constructor.apply(this);
+                Object.apply(this);
                 this.eventEmitter = websocketService;
             },
 
