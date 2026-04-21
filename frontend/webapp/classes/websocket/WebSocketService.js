@@ -64,6 +64,12 @@ sap.ui.define(
                     });
                     // internal websocket instance
                     this._webSocket = null;
+                    // `true` while a close() call is in flight. Lets
+                    // `_onClose` distinguish a user-initiated close from any
+                    // other close reason without relying on the close-code
+                    // heuristic (where server-side 1000 and client-side
+                    // 1000 are indistinguishable).
+                    this._manualClose = false;
                 },
 
                 /**
@@ -78,6 +84,9 @@ sap.ui.define(
                  */
                 setupConnection(connectionUrl, usePCP = true) {
                     if (!this._webSocket) {
+                        // Fresh connection: clear any stale manual-close
+                        // intent left from the previous session.
+                        this._manualClose = false;
                         // setup WebSocket
                         this._webSocket = usePCP ? new SAPPcPWebSocket(connectionUrl, SAPPcPWebSocket.SUPPORTED_PROTOCOLS.v10) : new WebSocket(connectionUrl);
                         // remember setup for reconnection handling
@@ -137,18 +146,29 @@ sap.ui.define(
                 },
 
                 /**
-                 * Close the WebSocket connection with Code 1000 (Normal Closure, Default used in UI5)
+                 * Close the WebSocket connection with Code 1000 (Normal Closure, Default used in UI5).
+                 *
+                 * Sets the manual-close intent flag and cancels any pending
+                 * reconnect unconditionally, so calling `close()` after the
+                 * server has already dropped the socket still suppresses a
+                 * scheduled retry.
                  *
                  * @public
                  */
                 close() {
+                    // Record intent and cancel any pending retry before
+                    // touching the socket. This matters when a retry is in
+                    // flight after a server-initiated abnormal close: the
+                    // socket is already null but we still want to stop the
+                    // retry clock.
+                    this._manualClose = true;
+                    this._retryStrategy.cancel();
+
                     if (!this._webSocket) {
                         this._logger.warning("Unable to close WebSocket. No WebSocket Instance available, setup a connection first.");
                         return;
                     }
 
-                    // In case we're within a reconnect attempt, cancel it
-                    this._retryStrategy.cancel();
                     // close the connection
                     this._webSocket.close();
                     // Reset some of the internal state
@@ -216,10 +236,17 @@ sap.ui.define(
                     // Null out the WebSocket immediately so isConnected() reflects
                     // the real state and prevents sending on a closed socket
                     this._webSocket = null;
-                    if (event.getParameter("code") === CloseCode.NORMAL_CLOSURE) {
-                        // In case we close our connection manually,
-                        // we do not want to trigger a reconnect!
+                    if (this._manualClose) {
+                        // User called close(): suppress retry regardless of
+                        // whatever close code the socket ended up with.
                         this._logger.info("Connection manually closed.", `Event: "Close"`);
+                        return;
+                    }
+                    if (event.getParameter("code") === CloseCode.NORMAL_CLOSURE) {
+                        // Server-initiated clean close (RFC 6455 §7.4.1
+                        // code 1000): treat as "do not retry". The task
+                        // the connection was opened for is finished.
+                        this._logger.info("Connection closed cleanly by server.", `Event: "Close"`);
                         return;
                     }
                     this._logger.info("Connection closed abnormally, trying to reconnect.", `Event: "Close"`);
@@ -254,9 +281,13 @@ sap.ui.define(
                  *
                  * Once the routing action has been extracted, the service is
                  * deliberately ignorant of which actions exist in the
-                 * application: it fires an event named after the `action`
-                 * entry as-is, so consumers attach by action name without
-                 * the service ever needing to know the vocabulary.
+                 * application: it fires an event named `"action:" + action`
+                 * so consumers attach by action name without the service
+                 * ever needing to know the vocabulary. The `"action:"`
+                 * prefix namespaces these dispatches away from framework
+                 * and lifecycle event names (`open`, `close`, `destroy`,
+                 * ...), so a rogue or unexpected wire value cannot collide
+                 * with them. Facade helpers hide the prefix from consumers.
                  *
                  * Messages with no action at all (a non-JSON plain
                  * WebSocket frame, or a PCP frame missing the custom
@@ -288,7 +319,11 @@ sap.ui.define(
                     }
 
                     if (action) {
-                        this.fireEvent(action, { data });
+                        // Keep the event name namespaced so wire-supplied
+                        // action strings cannot collide with framework or
+                        // lifecycle event names. Mirror the prefix in
+                        // WebSocketEventFacade when adding attach helpers.
+                        this.fireEvent(`action:${action}`, { data });
                     } else {
                         this.fireEvent("message", { data });
                     }
