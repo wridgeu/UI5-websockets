@@ -13,13 +13,12 @@
  *   per the spec).
  *
  * - **Plain mode** — the client offered no subprotocol at all (e.g. a raw
- *   `WebSocket` from the browser, or `curl`/`wscat`). We imitate PCP
- *   context by wrapping each outbound message in a small JSON envelope of
- *   the form `{ "pcpFields": { "action": "..." }, "data": "..." }`. The
- *   frontend can read the same `action` and `data` fields and dispatch on
- *   them, so both modes drive identical UX. Inbound plain frames are
- *   treated as raw text — the demo only sends bare command strings
- *   (`Ping`/`Disconnect`/`Terminate`) over plain WS.
+ *   `WebSocket` from the browser, or `curl`/`wscat`). Plain WebSocket has
+ *   no header channel, so each outbound push is serialized as a flat JSON
+ *   envelope `{ "action": "...", "data": "..." }`. The frontend parses the
+ *   same shape and dispatches on `action`, so both modes drive identical
+ *   UX. Inbound plain frames are treated as raw text — the demo only sends
+ *   bare command strings (`Ping`/`Disconnect`/`Terminate`) over plain WS.
  *
  * Clients that offer only non-PCP subprotocols are rejected by their own
  * runtime per RFC 6455 §4.2.2, because we never echo a value we do not
@@ -66,11 +65,12 @@ wss.on('connection', (ws, req) => {
   console.log(`${isReconnect ? 'reconnection' : 'connection'} opened (#${count}, mode=${mode}), hi`);
 
   // Build a frame in the right shape for this connection. In PCP mode the
-  // application action travels as a custom header field. In plain mode we
-  // mimic PCP context with a tiny JSON envelope so the frontend can drive
-  // the same action-based dispatch over a regular WebSocket.
+  // application action travels as a custom header field (spec-aligned per
+  // PCP v1.0: routing metadata in header fields, body is the payload). In
+  // plain mode there is no header channel, so the flat `{ action, data }`
+  // envelope is serialized into the body.
   const frame = (action, body) =>
-    isPcp ? encode({ fields: { action }, body }) : JSON.stringify({ pcpFields: { action }, data: body });
+    isPcp ? encode({ fields: { action }, body }) : JSON.stringify({ action, data: body });
 
   // Pull the body out of an inbound frame regardless of mode. PCP's decoder
   // already body-only-falls-back, but we route plain mode through the

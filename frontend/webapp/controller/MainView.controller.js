@@ -66,10 +66,10 @@ sap.ui.define(
 
             /**
              * Establish a connection using a regular `WebSocket` with no
-             * subprotocol. The backend wraps each push in a JSON envelope
-             * (`{ pcpFields: { action }, data }`) which the service
-             * unwraps transparently, so the same action-based events fire
-             * as in PCP mode.
+             * subprotocol. The backend serializes each push into the flat
+             * JSON envelope `{ action, data }` which the service unwraps
+             * transparently, so the same action-based events fire as in
+             * PCP mode.
              */
             setupPlain() {
                 this._setup(false);
