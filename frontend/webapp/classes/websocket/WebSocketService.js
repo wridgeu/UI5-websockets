@@ -239,19 +239,20 @@ sap.ui.define(
                  * Internal handler for message-event.
                  *
                  * The service supports two ways for the server to convey
-                 * per-message context, and reads them in this order:
+                 * per-message routing, and reads them in this order:
                  *
                  * 1. **Native PCP** — when the underlying socket is a
                  *    `SapPcpWebSocket`, the message event already carries a
                  *    `pcpFields` parameter (a flat key/value map of all PCP
-                 *    header fields, including `pcp-action` / `pcp-body-type`).
-                 * 2. **JSON envelope fallback** — when the underlying socket
-                 *    is a regular `WebSocket`, the server can imitate PCP
-                 *    context by sending a JSON body of the form
-                 *    `{ "pcpFields": { "action": "..." }, "data": "..." }`.
-                 *    The service unwraps the envelope before dispatching.
+                 *    header fields, including `pcp-action` / `pcp-body-type`
+                 *    and any application-level custom fields like `action`).
+                 *    The application's routing `action` is read from there.
+                 * 2. **Plain JSON envelope** — when the underlying socket is
+                 *    a regular `WebSocket`, the server serializes `action` /
+                 *    `data` into the frame body as `{ action, data }`. The
+                 *    service unwraps the envelope before dispatching.
                  *
-                 * Once context has been extracted, the service is
+                 * Once the routing action has been extracted, the service is
                  * deliberately ignorant of which actions exist in the
                  * application: it fires an event named after the `action`
                  * entry as-is, so consumers attach by action name without
@@ -265,18 +266,20 @@ sap.ui.define(
                  */
                 _onMessage(event) {
                     let data = event.getParameter("data");
-                    let pcpFields = event.getParameter("pcpFields");
+                    const pcpFields = event.getParameter("pcpFields");
 
-                    // Plain WebSocket fallback: when there is no native
-                    // pcpFields parameter (because we are not on a
-                    // SapPcpWebSocket), try unwrapping a JSON envelope from
-                    // the body. Non-JSON bodies pass through unchanged and
-                    // fall through as a generic `message` event below.
-                    if (!pcpFields && typeof data === "string" && data.length > 0 && data.charAt(0) === "{") {
+                    let action = pcpFields && pcpFields.action;
+
+                    // Plain WebSocket path: when there is no native pcpFields
+                    // parameter (because we are not on a SapPcpWebSocket),
+                    // try unwrapping the flat `{ action, data }` envelope
+                    // from the body. Non-JSON bodies pass through unchanged
+                    // and fall through as a generic `message` event below.
+                    if (!action && typeof data === "string" && data.length > 0 && data.charAt(0) === "{") {
                         try {
                             const envelope = JSON.parse(data);
-                            if (envelope && typeof envelope === "object" && envelope.pcpFields) {
-                                pcpFields = envelope.pcpFields;
+                            if (envelope && typeof envelope === "object" && typeof envelope.action === "string") {
+                                action = envelope.action;
                                 data = envelope.data;
                             }
                         } catch (error) {
@@ -284,7 +287,6 @@ sap.ui.define(
                         }
                     }
 
-                    const action = pcpFields && pcpFields.action;
                     if (action) {
                         this.fireEvent(action, { data });
                     } else {
